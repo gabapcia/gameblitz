@@ -1,0 +1,16 @@
+version: "2"
+
+sql:
+  -
+    engine: postgresql
+    schema: migrations
+    queries: ../sql
+    gen:
+      go:
+        sql_package: pgx/v5
+        package: sqlc
+        out: sqlc
+        overrides:
+          -
+            db_type: uuid
+            go_type: github.com/google/uuid.UUID
