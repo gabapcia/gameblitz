@@ -29,19 +29,19 @@ func sqlcLeaderboardToDomain(l sqlc.Leaderboard) leaderboard.Leaderboard {
 	}
 }
 
-func (c connection) CreateLeaderboard(ctx context.Context, leaderboard leaderboard.Leaderboard) (string, error) {
-	leaderboardID, err := c.queries.CreateLeaderboard(ctx, sqlc.CreateLeaderboardParams{
-		GameID:          leaderboard.GameID,
-		Name:            leaderboard.Name,
-		Description:     leaderboard.Description,
-		StartAt:         pgtype.Timestamptz{Time: leaderboard.StartAt, Valid: true},
-		EndAt:           pgtype.Timestamptz{Time: leaderboard.EndAt, Valid: !leaderboard.EndAt.IsZero()},
-		AggregationMode: leaderboard.AggregationMode,
-		DataType:        leaderboard.DataType,
-		Ordering:        leaderboard.Ordering,
+func (c connection) CreateLeaderboard(ctx context.Context, data leaderboard.NewLeaderboardData) (leaderboard.Leaderboard, error) {
+	leaderboard, err := c.queries.CreateLeaderboard(ctx, sqlc.CreateLeaderboardParams{
+		GameID:          data.GameID,
+		Name:            data.Name,
+		Description:     data.Description,
+		StartAt:         pgtype.Timestamptz{Time: data.StartAt, Valid: true},
+		EndAt:           pgtype.Timestamptz{Time: data.EndAt, Valid: !data.EndAt.IsZero()},
+		AggregationMode: data.AggregationMode,
+		DataType:        data.DataType,
+		Ordering:        data.Ordering,
 	})
 
-	return leaderboardID.String(), err
+	return sqlcLeaderboardToDomain(leaderboard), err
 }
 
 func (c connection) GetLeaderboardByIDAndGameID(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {

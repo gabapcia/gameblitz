@@ -15,7 +15,7 @@ import (
 const createLeaderboard = `-- name: CreateLeaderboard :one
 INSERT INTO "leaderboards" ("game_id", "name", "description", "start_at", "end_at", "aggregation_mode", "data_type", "ordering")
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING "id"
+RETURNING created_at, updated_at, deleted_at, id, game_id, name, description, start_at, end_at, aggregation_mode, data_type, ordering
 `
 
 type CreateLeaderboardParams struct {
@@ -29,7 +29,7 @@ type CreateLeaderboardParams struct {
 	Ordering        string
 }
 
-func (q *Queries) CreateLeaderboard(ctx context.Context, arg CreateLeaderboardParams) (uuid.UUID, error) {
+func (q *Queries) CreateLeaderboard(ctx context.Context, arg CreateLeaderboardParams) (Leaderboard, error) {
 	row := q.db.QueryRow(ctx, createLeaderboard,
 		arg.GameID,
 		arg.Name,
@@ -40,9 +40,22 @@ func (q *Queries) CreateLeaderboard(ctx context.Context, arg CreateLeaderboardPa
 		arg.DataType,
 		arg.Ordering,
 	)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	var i Leaderboard
+	err := row.Scan(
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.ID,
+		&i.GameID,
+		&i.Name,
+		&i.Description,
+		&i.StartAt,
+		&i.EndAt,
+		&i.AggregationMode,
+		&i.DataType,
+		&i.Ordering,
+	)
+	return i, err
 }
 
 const getLeaderboardByIDAndGameID = `-- name: GetLeaderboardByIDAndGameID :one

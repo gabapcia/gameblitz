@@ -12,7 +12,7 @@ import (
 
 func TestValidate(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
-		leaderboard := Leaderboard{
+		data := NewLeaderboardData{
 			GameID:          uuid.NewString(),
 			Name:            "Test Leaderboard",
 			Description:     "Test leaderboard validation unit test",
@@ -23,11 +23,11 @@ func TestValidate(t *testing.T) {
 			Ordering:        OrderingDesc,
 		}
 
-		assert.NoError(t, leaderboard.validate())
+		assert.NoError(t, data.validate())
 	})
 
 	t.Run("Invalid Fields", func(t *testing.T) {
-		leaderboard := Leaderboard{
+		data := NewLeaderboardData{
 			GameID:          "",
 			Name:            "",
 			Description:     "Test leaderboard validation unit test",
@@ -38,17 +38,17 @@ func TestValidate(t *testing.T) {
 			Ordering:        "INVALID",
 		}
 
-		assert.ErrorIs(t, leaderboard.validate(), ErrValidationError)
-		assert.ErrorIs(t, leaderboard.validate(), ErrInvalidGameID)
-		assert.ErrorIs(t, leaderboard.validate(), ErrInvalidName)
-		assert.ErrorIs(t, leaderboard.validate(), ErrInvalidStartDate)
-		assert.ErrorIs(t, leaderboard.validate(), ErrInvalidAggregationMode)
-		assert.ErrorIs(t, leaderboard.validate(), ErrInvalidDataType)
-		assert.ErrorIs(t, leaderboard.validate(), ErrInvalidOrdering)
+		assert.ErrorIs(t, data.validate(), ErrValidationError)
+		assert.ErrorIs(t, data.validate(), ErrInvalidGameID)
+		assert.ErrorIs(t, data.validate(), ErrInvalidName)
+		assert.ErrorIs(t, data.validate(), ErrInvalidStartDate)
+		assert.ErrorIs(t, data.validate(), ErrInvalidAggregationMode)
+		assert.ErrorIs(t, data.validate(), ErrInvalidDataType)
+		assert.ErrorIs(t, data.validate(), ErrInvalidOrdering)
 	})
 
 	t.Run("End Date Before Start Date", func(t *testing.T) {
-		leaderboard := Leaderboard{
+		data := NewLeaderboardData{
 			GameID:          uuid.NewString(),
 			Name:            "Test Leaderboard",
 			Description:     "Test leaderboard validation unit test",
@@ -59,16 +59,16 @@ func TestValidate(t *testing.T) {
 			Ordering:        OrderingDesc,
 		}
 
-		assert.ErrorIs(t, leaderboard.validate(), ErrValidationError)
-		assert.ErrorIs(t, leaderboard.validate(), ErrEndDateBeforeStartDate)
+		assert.ErrorIs(t, data.validate(), ErrValidationError)
+		assert.ErrorIs(t, data.validate(), ErrEndDateBeforeStartDate)
 	})
 }
 
 func TestBuildCreateFunc(t *testing.T) {
 	var (
-		ctx         = context.Background()
-		expectedID  = uuid.NewString()
-		leaderboard = Leaderboard{
+		ctx          = context.Background()
+		expectedID   = uuid.NewString()
+		expectedData = NewLeaderboardData{
 			GameID:          uuid.NewString(),
 			Name:            "Test Leaderboard",
 			Description:     "Test create leaderboard unit test",
@@ -81,36 +81,46 @@ func TestBuildCreateFunc(t *testing.T) {
 	)
 
 	t.Run("OK", func(t *testing.T) {
-		createFunc := BuildCreateFunc(func(ctx context.Context, leaderboard Leaderboard) (string, error) {
-			return expectedID, nil
+		createFunc := BuildCreateFunc(func(ctx context.Context, data NewLeaderboardData) (Leaderboard, error) {
+			return Leaderboard{
+				ID:              expectedID,
+				GameID:          data.GameID,
+				Name:            data.Name,
+				Description:     data.Description,
+				StartAt:         data.StartAt,
+				EndAt:           data.EndAt,
+				AggregationMode: data.AggregationMode,
+				DataType:        data.DataType,
+				Ordering:        data.Ordering,
+			}, nil
 		})
 
-		id, err := createFunc(ctx, leaderboard)
+		leaderboard, err := createFunc(ctx, expectedData)
 
 		assert.NoError(t, err)
-		assert.Equal(t, expectedID, id, "wrong id returned")
+		assert.Equal(t, expectedID, leaderboard.ID)
 	})
 
 	t.Run("Validation Error", func(t *testing.T) {
-		createFunc := BuildCreateFunc(func(ctx context.Context, leaderboard Leaderboard) (string, error) {
-			return expectedID, nil
+		createFunc := BuildCreateFunc(func(ctx context.Context, data NewLeaderboardData) (Leaderboard, error) {
+			return Leaderboard{}, nil
 		})
 
-		id, err := createFunc(ctx, Leaderboard{})
+		leaderboard, err := createFunc(ctx, NewLeaderboardData{})
 
 		assert.ErrorIs(t, err, ErrValidationError)
-		assert.Empty(t, id, "id should not be returned")
+		assert.Empty(t, leaderboard.ID)
 	})
 
 	t.Run("Random Error", func(t *testing.T) {
-		createFunc := BuildCreateFunc(func(ctx context.Context, leaderboard Leaderboard) (string, error) {
-			return "", errors.New("any error")
+		createFunc := BuildCreateFunc(func(ctx context.Context, data NewLeaderboardData) (Leaderboard, error) {
+			return Leaderboard{}, errors.New("any error")
 		})
 
-		id, err := createFunc(ctx, leaderboard)
+		leaderboard, err := createFunc(ctx, expectedData)
 
 		assert.Error(t, err)
-		assert.Empty(t, id, "id should not be returned")
+		assert.Empty(t, leaderboard.ID)
 	})
 }
 

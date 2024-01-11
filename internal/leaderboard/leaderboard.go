@@ -47,6 +47,17 @@ var (
 	}
 )
 
+type NewLeaderboardData struct {
+	GameID          string    // The ID from the game that is responsible for the leaderboard
+	Name            string    // Leaderboard's name
+	Description     string    // Leaderboard's description
+	StartAt         time.Time // Time that the leaderboard should start working
+	EndAt           time.Time // Time that the leaderboard will be closed for new updates
+	AggregationMode string    // Data aggregation mode
+	DataType        string    // Data type that the leaderboard should accept
+	Ordering        string    // Leaderboard ranking order
+}
+
 type Leaderboard struct {
 	CreatedAt       time.Time // Time that the leaderboard was created
 	UpdatedAt       time.Time // Last time that the leaderboard info was updated
@@ -62,7 +73,7 @@ type Leaderboard struct {
 	Ordering        string    // Leaderboard ranking order
 }
 
-func (l Leaderboard) validate() error {
+func (l NewLeaderboardData) validate() error {
 	errList := make([]error, 0)
 
 	if l.Name == "" {
@@ -101,12 +112,12 @@ func (l Leaderboard) validate() error {
 }
 
 func BuildCreateFunc(storageCreateFunc StorageCreateLeaderboardFunc) CreateFunc {
-	return func(ctx context.Context, leaderboard Leaderboard) (string, error) {
-		if err := leaderboard.validate(); err != nil {
-			return "", err
+	return func(ctx context.Context, data NewLeaderboardData) (Leaderboard, error) {
+		if err := data.validate(); err != nil {
+			return Leaderboard{}, err
 		}
 
-		return storageCreateFunc(ctx, leaderboard)
+		return storageCreateFunc(ctx, data)
 	}
 }
 
