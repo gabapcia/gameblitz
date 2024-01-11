@@ -9,7 +9,6 @@ import (
 
 var (
 	ErrValidationError        = errors.New("Validation error")
-	ErrInvalidLeaderboard     = errors.New("Invalid leaderboard")
 	ErrInvalidName            = errors.New("Invalid name")
 	ErrInvalidGameID          = errors.New("Invalid game id")
 	ErrInvalidStartDate       = errors.New("Invalid start date")
@@ -17,6 +16,9 @@ var (
 	ErrInvalidDataType        = errors.New("Invalid data type")
 	ErrInvalidOrdering        = errors.New("Invalid ordering")
 	ErrEndDateBeforeStartDate = errors.New("End date must be after the start date")
+
+	ErrInvalidLeaderboardID = errors.New("Invalid leaderboard id")
+	ErrLeaderboardNotFound  = errors.New("Leaderboard not found")
 )
 
 const (
@@ -105,5 +107,17 @@ func BuildCreateFunc(storageCreateFunc StorageCreateLeaderboardFunc) CreateFunc 
 		}
 
 		return storageCreateFunc(ctx, leaderboard)
+	}
+}
+
+func BuildGetByIDAndGameIDFunc(storageGetFunc StorageGetLeaderboardByIDAndGameIDFunc) GetByIDAndGameIDFunc {
+	return func(ctx context.Context, id, gameID string) (Leaderboard, error) {
+		return storageGetFunc(ctx, id, gameID)
+	}
+}
+
+func BuildSoftDeleteFunc(storageSoftDeleteFunc StorageSoftDeleteLeaderboardFunc) SoftDeleteFunc {
+	return func(ctx context.Context, id, gameID string) error {
+		return storageSoftDeleteFunc(ctx, id, gameID)
 	}
 }

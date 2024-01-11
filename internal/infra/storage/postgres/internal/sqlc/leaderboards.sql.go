@@ -44,3 +44,54 @@ func (q *Queries) CreateLeaderboard(ctx context.Context, arg CreateLeaderboardPa
 	err := row.Scan(&id)
 	return id, err
 }
+
+const getLeaderboardByIDAndGameID = `-- name: GetLeaderboardByIDAndGameID :one
+SELECT created_at, updated_at, deleted_at, id, game_id, name, description, start_at, end_at, aggregation_mode, data_type, ordering
+FROM "leaderboards" l
+WHERE l."id" = $1 AND l."game_id" = $2 AND l."deleted_at" IS NULL
+`
+
+type GetLeaderboardByIDAndGameIDParams struct {
+	ID     uuid.UUID
+	GameID string
+}
+
+func (q *Queries) GetLeaderboardByIDAndGameID(ctx context.Context, arg GetLeaderboardByIDAndGameIDParams) (Leaderboard, error) {
+	row := q.db.QueryRow(ctx, getLeaderboardByIDAndGameID, arg.ID, arg.GameID)
+	var i Leaderboard
+	err := row.Scan(
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.ID,
+		&i.GameID,
+		&i.Name,
+		&i.Description,
+		&i.StartAt,
+		&i.EndAt,
+		&i.AggregationMode,
+		&i.DataType,
+		&i.Ordering,
+	)
+	return i, err
+}
+
+const softDeleteLeaderboard = `-- name: SoftDeleteLeaderboard :execrows
+UPDATE "leaderboards"
+SET
+    "deleted_at" = NOW()
+WHERE "id" = $1 AND "game_id" = $2 AND "deleted_at" IS NULL
+`
+
+type SoftDeleteLeaderboardParams struct {
+	ID     uuid.UUID
+	GameID string
+}
+
+func (q *Queries) SoftDeleteLeaderboard(ctx context.Context, arg SoftDeleteLeaderboardParams) (int64, error) {
+	result, err := q.db.Exec(ctx, softDeleteLeaderboard, arg.ID, arg.GameID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
