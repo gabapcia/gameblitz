@@ -71,7 +71,7 @@ func TestBuildCreateFunc(t *testing.T) {
 		leaderboard = Leaderboard{
 			GameID:          uuid.NewString(),
 			Name:            "Test Leaderboard",
-			Description:     "Test leaderboard validation unit test",
+			Description:     "Test create leaderboard unit test",
 			StartAt:         time.Now(),
 			EndAt:           time.Time{},
 			AggregationMode: AggregationModeMax,
@@ -111,5 +111,118 @@ func TestBuildCreateFunc(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Empty(t, id, "id should not be returned")
+	})
+}
+
+func TestBuildGetByIDAndGameIDFunc(t *testing.T) {
+	var (
+		ctx                 = context.Background()
+		leaderboardID       = uuid.NewString()
+		gameID              = uuid.NewString()
+		expectedLeaderboard = Leaderboard{
+			CreatedAt:       time.Now(),
+			UpdatedAt:       time.Now(),
+			ID:              leaderboardID,
+			GameID:          gameID,
+			Name:            "Test Leaderboard",
+			Description:     "Test get leaderboard by id and game id unit test",
+			StartAt:         time.Now(),
+			EndAt:           time.Time{},
+			AggregationMode: AggregationModeMax,
+			DataType:        DataTypeInt,
+			Ordering:        OrderingDesc,
+		}
+	)
+
+	t.Run("OK", func(t *testing.T) {
+		getByIDAndGameIDFunc := BuildGetByIDAndGameIDFunc(func(ctx context.Context, id, gameID string) (Leaderboard, error) {
+			return expectedLeaderboard, nil
+		})
+
+		leaderboard, err := getByIDAndGameIDFunc(ctx, leaderboardID, gameID)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedLeaderboard.ID, leaderboard.ID)
+	})
+
+	t.Run("Invalid Leaderboard ID", func(t *testing.T) {
+		getByIDAndGameIDFunc := BuildGetByIDAndGameIDFunc(func(ctx context.Context, id, gameID string) (Leaderboard, error) {
+			return Leaderboard{}, ErrInvalidLeaderboardID
+		})
+
+		leaderboard, err := getByIDAndGameIDFunc(ctx, leaderboardID, gameID)
+
+		assert.ErrorIs(t, err, ErrInvalidLeaderboardID)
+		assert.Empty(t, leaderboard.ID)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		getByIDAndGameIDFunc := BuildGetByIDAndGameIDFunc(func(ctx context.Context, id, gameID string) (Leaderboard, error) {
+			return Leaderboard{}, ErrLeaderboardNotFound
+		})
+
+		leaderboard, err := getByIDAndGameIDFunc(ctx, leaderboardID, gameID)
+
+		assert.ErrorIs(t, err, ErrLeaderboardNotFound)
+		assert.Empty(t, leaderboard.ID)
+	})
+
+	t.Run("Random Error", func(t *testing.T) {
+		getByIDAndGameIDFunc := BuildGetByIDAndGameIDFunc(func(ctx context.Context, id, gameID string) (Leaderboard, error) {
+			return Leaderboard{}, errors.New("any error")
+		})
+
+		leaderboard, err := getByIDAndGameIDFunc(ctx, leaderboardID, gameID)
+
+		assert.Error(t, err)
+		assert.Empty(t, leaderboard.ID)
+	})
+}
+
+func TestBuildSoftDeleteFunc(t *testing.T) {
+	var (
+		ctx           = context.Background()
+		leaderboardID = uuid.NewString()
+		gameID        = uuid.NewString()
+	)
+
+	t.Run("OK", func(t *testing.T) {
+		softDeleteFunc := BuildSoftDeleteFunc(func(ctx context.Context, id, gameID string) error {
+			return nil
+		})
+
+		err := softDeleteFunc(ctx, leaderboardID, gameID)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("Invalid Leaderboard ID", func(t *testing.T) {
+		softDeleteFunc := BuildSoftDeleteFunc(func(ctx context.Context, id, gameID string) error {
+			return ErrInvalidLeaderboardID
+		})
+
+		err := softDeleteFunc(ctx, leaderboardID, gameID)
+
+		assert.ErrorIs(t, err, ErrInvalidLeaderboardID)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		softDeleteFunc := BuildSoftDeleteFunc(func(ctx context.Context, id, gameID string) error {
+			return ErrLeaderboardNotFound
+		})
+
+		err := softDeleteFunc(ctx, leaderboardID, gameID)
+
+		assert.ErrorIs(t, err, ErrLeaderboardNotFound)
+	})
+
+	t.Run("Random Error", func(t *testing.T) {
+		softDeleteFunc := BuildSoftDeleteFunc(func(ctx context.Context, id, gameID string) error {
+			return errors.New("any error")
+		})
+
+		err := softDeleteFunc(ctx, leaderboardID, gameID)
+
+		assert.Error(t, err)
 	})
 }
