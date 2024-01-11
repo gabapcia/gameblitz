@@ -98,7 +98,7 @@ func (l Leaderboard) validate() error {
 	return errors.Join(errList...)
 }
 
-func BuildCreateFunc(storageCreateFunc StorageCreateFunc) CreateFunc {
+func BuildCreateFunc(storageCreateFunc StorageCreateLeaderboardFunc) CreateFunc {
 	return func(ctx context.Context, leaderboard Leaderboard) (string, error) {
 		if err := leaderboard.validate(); err != nil {
 			return "", err
