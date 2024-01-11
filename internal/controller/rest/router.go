@@ -11,7 +11,9 @@ import (
 type Config struct {
 	Port int
 
-	CreateLeaderboardFunc leaderboard.CreateFunc
+	CreateLeaderboardFunc              leaderboard.CreateFunc
+	GetLeaderboardByIDAndGameIDFunc    leaderboard.GetByIDAndGameIDFunc
+	DeleteLeaderboardByIDAndGameIDFunc leaderboard.SoftDeleteFunc
 }
 
 func Execute(config Config) error {
@@ -23,6 +25,8 @@ func Execute(config Config) error {
 
 	leaderboards := api.Group("/leaderboards")
 	leaderboards.Post("/", BuildCreateLeaderboardHandler(config.CreateLeaderboardFunc))
+	leaderboards.Get("/:id", BuildGetLeaderboardHandler(config.GetLeaderboardByIDAndGameIDFunc))
+	leaderboards.Delete("/:id", BuildDeleteLeaderboardHandler(config.DeleteLeaderboardByIDAndGameIDFunc))
 
 	return app.Listen(fmt.Sprintf(":%d", config.Port))
 }

@@ -83,3 +83,34 @@ func BuildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc)
 		return c.Status(http.StatusCreated).JSON(leaderboardFromDomain(leaderboard))
 	}
 }
+
+func BuildGetLeaderboardHandler(getLeaderboardByIDAndGameIDFunc leaderboard.GetByIDAndGameIDFunc) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var (
+			id     = c.Params("id")
+			gameID = c.Query("gameId")
+		)
+
+		leaderboard, err := getLeaderboardByIDAndGameIDFunc(c.Context(), id, gameID)
+		if err != nil {
+			return err
+		}
+
+		return c.Status(http.StatusOK).JSON(leaderboardFromDomain(leaderboard))
+	}
+}
+
+func BuildDeleteLeaderboardHandler(deleteLeaderboardByIDAndGameIDFunc leaderboard.SoftDeleteFunc) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var (
+			id     = c.Params("id")
+			gameID = c.Query("gameId")
+		)
+
+		if err := deleteLeaderboardByIDAndGameIDFunc(c.Context(), id, gameID); err != nil {
+			return err
+		}
+
+		return c.SendStatus(http.StatusNoContent)
+	}
+}

@@ -30,8 +30,10 @@ func main() {
 	defer postgres.Close()
 
 	restConfig := rest.Config{
-		Port:                  config.Port,
-		CreateLeaderboardFunc: leaderboard.BuildCreateFunc(postgres.CreateLeaderboard),
+		Port:                               config.Port,
+		CreateLeaderboardFunc:              leaderboard.BuildCreateFunc(postgres.CreateLeaderboard),
+		GetLeaderboardByIDAndGameIDFunc:    leaderboard.BuildGetByIDAndGameIDFunc(postgres.GetLeaderboardByIDAndGameID),
+		DeleteLeaderboardByIDAndGameIDFunc: leaderboard.BuildSoftDeleteFunc(postgres.SoftDeleteLeaderboard),
 	}
 	if err := rest.Execute(restConfig); err != nil {
 		panic(err)
