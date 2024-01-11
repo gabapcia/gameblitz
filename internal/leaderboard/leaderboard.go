@@ -1,6 +1,7 @@
 package leaderboard
 
 import (
+	"context"
 	"errors"
 	"slices"
 	"time"
@@ -95,4 +96,14 @@ func (l Leaderboard) validate() error {
 	}
 
 	return errors.Join(errList...)
+}
+
+func BuildCreateFunc(storageCreateFunc StorageCreateFunc) CreateFunc {
+	return func(ctx context.Context, leaderboard Leaderboard) (string, error) {
+		if err := leaderboard.validate(); err != nil {
+			return "", err
+		}
+
+		return storageCreateFunc(ctx, leaderboard)
+	}
 }

@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # Databases
   postgres:
     image: postgres:16-alpine
     ports:
@@ -9,3 +10,18 @@ services:
       POSTGRES_DB: metagaming
       POSTGRES_USER: metagaming
       POSTGRES_PASSWORD: metagaming
+  redis:
+    image: redis:7-alpine
+    ports:
+      - 6379:6379
+  
+  # Events
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: metagaming
+      RABBITMQ_DEFAULT_PASS: metagaming
+      RABBITMQ_DEFAULT_VHOST: metagaming
