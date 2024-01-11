@@ -6,7 +6,7 @@ import (
 
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 type CreateLeaderboardReq struct {
@@ -21,17 +21,17 @@ type CreateLeaderboardReq struct {
 }
 
 type Leaderboard struct {
-	CreatedAt       time.Time `json:"createdAt"`       // Time that the leaderboard was created
-	UpdatedAt       time.Time `json:"updatedAt"`       // Last time that the leaderboard info was updated
-	ID              string    `json:"id"`              // Leaderboard's ID
-	GameID          string    `json:"gameId"`          // The ID from the game that is responsible for the leaderboard
-	Name            string    `json:"name"`            // Leaderboard's name
-	Description     string    `json:"description"`     // Leaderboard's description
-	StartAt         time.Time `json:"startAt"`         // Time that the leaderboard should start working
-	EndAt           time.Time `json:"endAt"`           // Time that the leaderboard will be closed for new updates
-	AggregationMode string    `json:"aggregationMode"` // Data aggregation mode
-	DataType        string    `json:"dataType"`        // Data type that the leaderboard should accept
-	Ordering        string    `json:"ordering"`        // Leaderboard ranking order
+	CreatedAt       time.Time  `json:"createdAt"`       // Time that the leaderboard was created
+	UpdatedAt       time.Time  `json:"updatedAt"`       // Last time that the leaderboard info was updated
+	ID              string     `json:"id"`              // Leaderboard's ID
+	GameID          string     `json:"gameId"`          // The ID from the game that is responsible for the leaderboard
+	Name            string     `json:"name"`            // Leaderboard's name
+	Description     string     `json:"description"`     // Leaderboard's description
+	StartAt         time.Time  `json:"startAt"`         // Time that the leaderboard should start working
+	EndAt           *time.Time `json:"endAt"`           // Time that the leaderboard will be closed for new updates
+	AggregationMode string     `json:"aggregationMode"` // Data aggregation mode
+	DataType        string     `json:"dataType"`        // Data type that the leaderboard should accept
+	Ordering        string     `json:"ordering"`        // Leaderboard ranking order
 }
 
 func (r CreateLeaderboardReq) toDomain() leaderboard.NewLeaderboardData {
@@ -48,6 +48,11 @@ func (r CreateLeaderboardReq) toDomain() leaderboard.NewLeaderboardData {
 }
 
 func leaderboardFromDomain(l leaderboard.Leaderboard) Leaderboard {
+	var endAt *time.Time
+	if !l.EndAt.IsZero() {
+		endAt = &l.EndAt
+	}
+
 	return Leaderboard{
 		CreatedAt:       l.CreatedAt,
 		UpdatedAt:       l.UpdatedAt,
@@ -56,7 +61,7 @@ func leaderboardFromDomain(l leaderboard.Leaderboard) Leaderboard {
 		Name:            l.Name,
 		Description:     l.Description,
 		StartAt:         l.StartAt,
-		EndAt:           l.EndAt,
+		EndAt:           endAt,
 		AggregationMode: l.AggregationMode,
 		DataType:        l.DataType,
 		Ordering:        l.Ordering,
@@ -64,9 +69,9 @@ func leaderboardFromDomain(l leaderboard.Leaderboard) Leaderboard {
 }
 
 func BuildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc) fiber.Handler {
-	return func(c fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
 		var body CreateLeaderboardReq
-		if err := c.Bind().Body(&body); err != nil {
+		if err := c.BodyParser(&body); err != nil {
 			return err
 		}
 
@@ -75,6 +80,6 @@ func BuildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc)
 			return err
 		}
 
-		return c.Status(http.StatusCreated).JSON(leaderboard)
+		return c.Status(http.StatusCreated).JSON(leaderboardFromDomain(leaderboard))
 	}
 }

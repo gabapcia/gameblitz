@@ -3,7 +3,7 @@ package rest
 import (
 	"fmt"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 )
@@ -15,7 +15,9 @@ type Config struct {
 }
 
 func Execute(config Config) error {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: true,
+	})
 
 	api := app.Group("/api/v1")
 
