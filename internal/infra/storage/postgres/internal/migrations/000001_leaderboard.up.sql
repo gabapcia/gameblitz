@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS "leaderboards" (
 
     CONSTRAINT "game_id_check" CHECK (TRIM("game_id") <> ''),
     CONSTRAINT "name_check" CHECK (TRIM("name") <> ''),
-    CONSTRAINT "end_date_after_start_date_check" CHECK ("end_at" > "start_at")
+    CONSTRAINT "end_date_after_start_date_check" CHECK ("end_at" IS NULL OR "end_at" > "start_at")
 );
 
 CREATE INDEX IF NOT EXISTS "idx_leaderboard_created_at" ON "leaderboards" ("created_at");
