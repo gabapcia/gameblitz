@@ -3,6 +3,8 @@ BIN_DIR=$(shell go env GOPATH)/bin
 MIGRATE=$(BIN_DIR)/migrate
 SQLC=$(BIN_DIR)/sqlc
 
+test:
+	@go test ./...
 
 db-queries:		## Generate SQLC code.
 	@test ! -f $(SQLC) && go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest || true

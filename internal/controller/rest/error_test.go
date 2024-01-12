@@ -32,10 +32,7 @@ func TestErrorResponseWithDetails(t *testing.T) {
 }
 
 func TestBuildErrorHandler(t *testing.T) {
-	logger, err := zap.NewDevelopment()
-	assert.NoError(t, err)
-
-	app := fiber.New(fiber.Config{ErrorHandler: BuildErrorHandler(logger.Sugar())})
+	app := fiber.New(fiber.Config{ErrorHandler: BuildErrorHandler(zap.NewNop().Sugar())})
 	app.Get("/", func(c *fiber.Ctx) error {
 		return errors.New("any error")
 	})

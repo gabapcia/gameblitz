@@ -79,6 +79,7 @@ func TestBuildCreateLeaderboardHandler(t *testing.T) {
 
 	t.Run("Random Error", func(t *testing.T) {
 		app := App(Config{
+			Logger: zap.NewNop().Sugar(),
 			CreateLeaderboardFunc: leaderboard.BuildCreateFunc(func(ctx context.Context, data leaderboard.NewLeaderboardData) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{}, errors.New("any error")
 			}),
@@ -101,7 +102,7 @@ func TestBuildCreateLeaderboardHandler(t *testing.T) {
 		assert.NoError(t, err)
 		defer resp.Body.Close()
 
-		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 
 		var data ErrorResponse
 		err = json.NewDecoder(resp.Body).Decode(&data)
@@ -218,11 +219,8 @@ func TestBuildGetLeaderboardHandler(t *testing.T) {
 	})
 
 	t.Run("Random Error", func(t *testing.T) {
-		logger, err := zap.NewDevelopment()
-		assert.NoError(t, err)
-
 		app := App(Config{
-			Logger: logger.Sugar(),
+			Logger: zap.NewNop().Sugar(),
 			GetLeaderboardByIDAndGameIDFunc: leaderboard.BuildGetByIDAndGameIDFunc(func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{}, errors.New("any error")
 			}),
@@ -320,11 +318,8 @@ func TestBuildDeleteLeaderboardHandler(t *testing.T) {
 	})
 
 	t.Run("Random Error", func(t *testing.T) {
-		logger, err := zap.NewDevelopment()
-		assert.NoError(t, err)
-
 		app := App(Config{
-			Logger: logger.Sugar(),
+			Logger: zap.NewNop().Sugar(),
 			DeleteLeaderboardByIDAndGameIDFunc: leaderboard.BuildSoftDeleteFunc(func(ctx context.Context, id, gameID string) error {
 				return errors.New("any error")
 			}),
