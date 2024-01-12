@@ -60,6 +60,28 @@ func TestValidate(t *testing.T) {
 	})
 }
 
+func TestLeaderboardClosed(t *testing.T) {
+	t.Run("Leaderboard Deleted", func(t *testing.T) {
+		isClosed := Leaderboard{DeletedAt: time.Now()}.Closed()
+		assert.Equal(t, true, isClosed)
+	})
+
+	t.Run("Leaderboard Not Started", func(t *testing.T) {
+		isClosed := Leaderboard{StartAt: time.Now().Add(24 * time.Hour)}.Closed()
+		assert.Equal(t, true, isClosed)
+	})
+
+	t.Run("Leaderboard Ended", func(t *testing.T) {
+		isClosed := Leaderboard{EndAt: time.Now().Add(-24 * time.Hour)}.Closed()
+		assert.Equal(t, true, isClosed)
+	})
+
+	t.Run("Leaderboard Started", func(t *testing.T) {
+		isClosed := Leaderboard{StartAt: time.Now().Add(-24 * time.Hour)}.Closed()
+		assert.Equal(t, false, isClosed)
+	})
+}
+
 func TestBuildCreateFunc(t *testing.T) {
 	var (
 		ctx          = context.Background()

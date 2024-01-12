@@ -99,6 +99,11 @@ func (l NewLeaderboardData) validate() error {
 	return errors.Join(errList...)
 }
 
+func (l Leaderboard) Closed() bool {
+	now := time.Now()
+	return !l.DeletedAt.IsZero() || now.Before(l.StartAt) || (!l.EndAt.IsZero() && now.After(l.EndAt))
+}
+
 func BuildCreateFunc(storageCreateFunc StorageCreateLeaderboardFunc) CreateFunc {
 	return func(ctx context.Context, data NewLeaderboardData) (Leaderboard, error) {
 		if err := data.validate(); err != nil {
