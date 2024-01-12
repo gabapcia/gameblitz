@@ -68,6 +68,13 @@ func leaderboardFromDomain(l leaderboard.Leaderboard) Leaderboard {
 	}
 }
 
+var (
+	ErrorResponseLeaderboardInvalid       = ErrorResponse{Code: "1.0", Message: "Invalid Leaderboard"}
+	ErrorResponseLeaderboardNotFound      = ErrorResponse{Code: "1.1", Message: "Leaderboard not found"}
+	ErrorResponseLeaderboardInvalidID     = ErrorResponse{Code: "1.2", Message: "Invalid Leaderboard ID"}
+	ErrorResponseLeaderboardInvalidGameID = ErrorResponse{Code: "1.3", Message: "Invalid Leaderboard Game ID"}
+)
+
 func BuildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var body CreateLeaderboardReq
@@ -88,8 +95,12 @@ func BuildGetLeaderboardHandler(getLeaderboardByIDAndGameIDFunc leaderboard.GetB
 	return func(c *fiber.Ctx) error {
 		var (
 			id     = c.Params("id")
-			gameID = c.Query("gameId")
+			gameID = string(c.Request().Header.Peek(gameIDHeader))
 		)
+
+		if gameID == "" {
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalidGameID)
+		}
 
 		leaderboard, err := getLeaderboardByIDAndGameIDFunc(c.Context(), id, gameID)
 		if err != nil {
@@ -104,8 +115,12 @@ func BuildDeleteLeaderboardHandler(deleteLeaderboardByIDAndGameIDFunc leaderboar
 	return func(c *fiber.Ctx) error {
 		var (
 			id     = c.Params("id")
-			gameID = c.Query("gameId")
+			gameID = string(c.Request().Header.Peek(gameIDHeader))
 		)
+
+		if gameID == "" {
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalidGameID)
+		}
 
 		if err := deleteLeaderboardByIDAndGameIDFunc(c.Context(), id, gameID); err != nil {
 			return err

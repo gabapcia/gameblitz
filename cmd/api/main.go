@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"github.com/kelseyhightower/envconfig"
+	"go.elastic.co/ecszap"
+	"go.uber.org/zap"
 
 	"github.com/gabarcia/metagaming-api/internal/controller/rest"
 	"github.com/gabarcia/metagaming-api/internal/infra/storage/postgres"
@@ -16,16 +19,22 @@ type Config struct {
 }
 
 func main() {
-	ctx := context.Background()
+	var (
+		ctx = context.Background()
+
+		core   = ecszap.NewCore(ecszap.NewDefaultEncoderConfig(), os.Stdout, zap.InfoLevel)
+		logger = zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.PanicLevel)).Sugar()
+	)
+	defer logger.Sync()
 
 	var config Config
 	if err := envconfig.Process("", &config); err != nil {
-		panic(err)
+		logger.Panic(err)
 	}
 
 	postgres, err := postgres.New(ctx, config.PotgresDSN)
 	if err != nil {
-		panic(err)
+		logger.Panic(err)
 	}
 	defer postgres.Close()
 
@@ -36,6 +45,6 @@ func main() {
 		DeleteLeaderboardByIDAndGameIDFunc: leaderboard.BuildSoftDeleteFunc(postgres.SoftDeleteLeaderboard),
 	}
 	if err := rest.Execute(restConfig); err != nil {
-		panic(err)
+		logger.Panic(err)
 	}
 }
