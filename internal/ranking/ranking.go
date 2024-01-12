@@ -9,6 +9,7 @@ import (
 
 var (
 	ErrInvalidAggregationMode = errors.New("invalid aggregation mode")
+	ErrLeaderboardClosed      = errors.New("leaderboard closed")
 )
 
 type Rank struct {
@@ -28,6 +29,10 @@ func BuildUpsertPlayerRankFunc(
 		lb, err := getLeaderboardByIDAndGameIDFunc(ctx, leaderboardID, gameID)
 		if err != nil {
 			return err
+		}
+
+		if lb.Closed() {
+			return ErrLeaderboardClosed
 		}
 
 		switch lb.AggregationMode {

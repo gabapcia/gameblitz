@@ -5,8 +5,10 @@ import (
 	"errors"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -110,5 +112,19 @@ func TestBuildUpsertPlayerRankFunc(t *testing.T) {
 
 		err := upsertPlayerRankFunc(ctx, leaderboardID, gameID, playerID, rand.Float64())
 		assert.Error(t, err)
+	})
+
+	t.Run("Leaderboard Closed", func(t *testing.T) {
+		upsertPlayerRankFunc := BuildUpsertPlayerRankFunc(
+			func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
+				return leaderboard.Leaderboard{EndAt: time.Now().Add(-24 * time.Hour)}, nil
+			},
+			nil,
+			nil,
+			nil,
+		)
+
+		err := upsertPlayerRankFunc(ctx, leaderboardID, gameID, playerID, rand.Float64())
+		assert.ErrorIs(t, err, ErrLeaderboardClosed)
 	})
 }
