@@ -3,7 +3,7 @@ BIN_DIR=$(shell go env GOPATH)/bin
 MIGRATE=$(BIN_DIR)/migrate
 SQLC=$(BIN_DIR)/sqlc
 
-test:
+test:			## Run unit tests
 	@go test ./...
 
 db-queries:		## Generate SQLC code.

@@ -9,7 +9,16 @@ import (
 
 var (
 	ErrInvalidAggregationMode = errors.New("invalid aggregation mode")
+	ErrInvalidOrdering        = errors.New("invalid ordering")
 	ErrLeaderboardClosed      = errors.New("leaderboard closed")
+	ErrInvalidPageNumber      = errors.New("invalid page number")
+	ErrInvalidLimitNumber     = errors.New("invalid limit number")
+)
+
+const (
+	MaxLimitNumber = 500
+	MinLimitNumber = 1
+	MinPageNumber  = 0
 )
 
 type Rank struct {
@@ -20,17 +29,11 @@ type Rank struct {
 }
 
 func BuildUpsertPlayerRankFunc(
-	getLeaderboardByIDAndGameIDFunc leaderboard.GetByIDAndGameIDFunc,
 	incrementPlayerRankValueFunc StorageIncrementPlayerRankValueFunc,
 	setMaxPlayerRankValueFunc StorageSetMaxPlayerRankValueFunc,
 	setMinPlayerRankValueFunc StorageSetMinPlayerRankValueFunc,
 ) UpsertPlayerRankFunc {
-	return func(ctx context.Context, leaderboardID, gameID, playerID string, value float64) error {
-		lb, err := getLeaderboardByIDAndGameIDFunc(ctx, leaderboardID, gameID)
-		if err != nil {
-			return err
-		}
-
+	return func(ctx context.Context, lb leaderboard.Leaderboard, playerID string, value float64) error {
 		if lb.Closed() {
 			return ErrLeaderboardClosed
 		}
@@ -45,5 +48,19 @@ func BuildUpsertPlayerRankFunc(
 		default:
 			return ErrInvalidAggregationMode
 		}
+	}
+}
+
+func BuildRankingFunc(getRankingFunc StorageGetRankingFunc) RankingFunc {
+	return func(ctx context.Context, lb leaderboard.Leaderboard, page, limit int64) ([]Rank, error) {
+		if page < MinPageNumber {
+			return nil, ErrInvalidPageNumber
+		}
+
+		if limit < MinLimitNumber || limit > MaxLimitNumber {
+			return nil, ErrInvalidLimitNumber
+		}
+
+		return getRankingFunc(ctx, lb.ID, lb.Ordering, page, limit)
 	}
 }
