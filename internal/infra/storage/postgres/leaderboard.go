@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
+	"github.com/gabarcia/metagaming-api/internal/infra/storage/postgres/internal/sqlc"
+	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-
-	"github.com/gabarcia/metagaming-api/internal/infra/storage/postgres/internal/sqlc"
-	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 )
 
 func sqlcLeaderboardToDomain(l sqlc.Leaderboard) leaderboard.Leaderboard {
@@ -24,7 +24,6 @@ func sqlcLeaderboardToDomain(l sqlc.Leaderboard) leaderboard.Leaderboard {
 		StartAt:         l.StartAt.Time,
 		EndAt:           l.EndAt.Time,
 		AggregationMode: l.AggregationMode,
-		DataType:        l.DataType,
 		Ordering:        l.Ordering,
 	}
 }
@@ -37,7 +36,6 @@ func (c connection) CreateLeaderboard(ctx context.Context, data leaderboard.NewL
 		StartAt:         pgtype.Timestamptz{Time: data.StartAt, Valid: true},
 		EndAt:           pgtype.Timestamptz{Time: data.EndAt, Valid: !data.EndAt.IsZero()},
 		AggregationMode: data.AggregationMode,
-		DataType:        data.DataType,
 		Ordering:        data.Ordering,
 	})
 

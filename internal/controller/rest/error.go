@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 )

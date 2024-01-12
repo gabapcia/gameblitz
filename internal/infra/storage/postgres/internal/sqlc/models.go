@@ -20,6 +20,5 @@ type Leaderboard struct {
 	StartAt         pgtype.Timestamptz
 	EndAt           pgtype.Timestamptz
 	AggregationMode string
-	DataType        string
 	Ordering        string
 }

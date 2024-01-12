@@ -16,7 +16,6 @@ type CreateLeaderboardReq struct {
 	StartAt         time.Time `json:"startAt"`         // Time that the leaderboard should start working
 	EndAt           time.Time `json:"endAt"`           // Time that the leaderboard will be closed for new updates
 	AggregationMode string    `json:"aggregationMode"` // Data aggregation mode
-	DataType        string    `json:"dataType"`        // Data type that the leaderboard should accept
 	Ordering        string    `json:"ordering"`        // Leaderboard ranking order
 }
 
@@ -30,7 +29,6 @@ type Leaderboard struct {
 	StartAt         time.Time  `json:"startAt"`         // Time that the leaderboard should start working
 	EndAt           *time.Time `json:"endAt"`           // Time that the leaderboard will be closed for new updates
 	AggregationMode string     `json:"aggregationMode"` // Data aggregation mode
-	DataType        string     `json:"dataType"`        // Data type that the leaderboard should accept
 	Ordering        string     `json:"ordering"`        // Leaderboard ranking order
 }
 
@@ -42,7 +40,6 @@ func (r CreateLeaderboardReq) toDomain() leaderboard.NewLeaderboardData {
 		StartAt:         r.StartAt,
 		EndAt:           r.EndAt,
 		AggregationMode: r.AggregationMode,
-		DataType:        r.DataType,
 		Ordering:        r.Ordering,
 	}
 }
@@ -63,7 +60,6 @@ func leaderboardFromDomain(l leaderboard.Leaderboard) Leaderboard {
 		StartAt:         l.StartAt,
 		EndAt:           endAt,
 		AggregationMode: l.AggregationMode,
-		DataType:        l.DataType,
 		Ordering:        l.Ordering,
 	}
 }

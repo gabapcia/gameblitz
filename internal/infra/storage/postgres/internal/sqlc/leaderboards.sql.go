@@ -13,9 +13,9 @@ import (
 )
 
 const createLeaderboard = `-- name: CreateLeaderboard :one
-INSERT INTO "leaderboards" ("game_id", "name", "description", "start_at", "end_at", "aggregation_mode", "data_type", "ordering")
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING created_at, updated_at, deleted_at, id, game_id, name, description, start_at, end_at, aggregation_mode, data_type, ordering
+INSERT INTO "leaderboards" ("game_id", "name", "description", "start_at", "end_at", "aggregation_mode", "ordering")
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING created_at, updated_at, deleted_at, id, game_id, name, description, start_at, end_at, aggregation_mode, ordering
 `
 
 type CreateLeaderboardParams struct {
@@ -25,7 +25,6 @@ type CreateLeaderboardParams struct {
 	StartAt         pgtype.Timestamptz
 	EndAt           pgtype.Timestamptz
 	AggregationMode string
-	DataType        string
 	Ordering        string
 }
 
@@ -37,7 +36,6 @@ func (q *Queries) CreateLeaderboard(ctx context.Context, arg CreateLeaderboardPa
 		arg.StartAt,
 		arg.EndAt,
 		arg.AggregationMode,
-		arg.DataType,
 		arg.Ordering,
 	)
 	var i Leaderboard
@@ -52,14 +50,13 @@ func (q *Queries) CreateLeaderboard(ctx context.Context, arg CreateLeaderboardPa
 		&i.StartAt,
 		&i.EndAt,
 		&i.AggregationMode,
-		&i.DataType,
 		&i.Ordering,
 	)
 	return i, err
 }
 
 const getLeaderboardByIDAndGameID = `-- name: GetLeaderboardByIDAndGameID :one
-SELECT created_at, updated_at, deleted_at, id, game_id, name, description, start_at, end_at, aggregation_mode, data_type, ordering
+SELECT created_at, updated_at, deleted_at, id, game_id, name, description, start_at, end_at, aggregation_mode, ordering
 FROM "leaderboards" l
 WHERE l."id" = $1 AND l."game_id" = $2 AND l."deleted_at" IS NULL
 `
@@ -83,7 +80,6 @@ func (q *Queries) GetLeaderboardByIDAndGameID(ctx context.Context, arg GetLeader
 		&i.StartAt,
 		&i.EndAt,
 		&i.AggregationMode,
-		&i.DataType,
 		&i.Ordering,
 	)
 	return i, err

@@ -8,25 +8,22 @@ import (
 )
 
 var (
-	ErrValidationError        = errors.New("Validation error")
-	ErrInvalidName            = errors.New("Invalid name")
-	ErrInvalidGameID          = errors.New("Invalid game id")
-	ErrInvalidStartDate       = errors.New("Invalid start date")
-	ErrInvalidAggregationMode = errors.New("Invalid aggregation mode")
-	ErrInvalidDataType        = errors.New("Invalid data type")
-	ErrInvalidOrdering        = errors.New("Invalid ordering")
-	ErrEndDateBeforeStartDate = errors.New("End date must be after the start date")
+	ErrValidationError        = errors.New("validation error")
+	ErrInvalidName            = errors.New("invalid name")
+	ErrInvalidGameID          = errors.New("invalid game id")
+	ErrInvalidStartDate       = errors.New("invalid start date")
+	ErrInvalidAggregationMode = errors.New("invalid aggregation mode")
+	ErrInvalidOrdering        = errors.New("invalid ordering")
+	ErrEndDateBeforeStartDate = errors.New("end date must be after the start date")
 
-	ErrInvalidLeaderboardID = errors.New("Invalid leaderboard id")
-	ErrLeaderboardNotFound  = errors.New("Leaderboard not found")
+	ErrInvalidLeaderboardID = errors.New("invalid leaderboard id")
+	ErrLeaderboardNotFound  = errors.New("leaderboard not found")
 )
 
 const (
 	AggregationModeInc = "INC"
 	AggregationModeMax = "MAX"
 	AggregationModeMin = "MIN"
-
-	DataTypeInt = "INT"
 
 	OrderingAsc  = "ASC"
 	OrderingDesc = "DESC"
@@ -37,9 +34,6 @@ var (
 		AggregationModeInc,
 		AggregationModeMax,
 		AggregationModeMin,
-	}
-	DataTypes = []string{
-		DataTypeInt,
 	}
 	OrderingModes = []string{
 		OrderingAsc,
@@ -54,7 +48,6 @@ type NewLeaderboardData struct {
 	StartAt         time.Time // Time that the leaderboard should start working
 	EndAt           time.Time // Time that the leaderboard will be closed for new updates
 	AggregationMode string    // Data aggregation mode
-	DataType        string    // Data type that the leaderboard should accept
 	Ordering        string    // Leaderboard ranking order
 }
 
@@ -69,7 +62,6 @@ type Leaderboard struct {
 	StartAt         time.Time // Time that the leaderboard should start working
 	EndAt           time.Time // Time that the leaderboard will be closed for new updates
 	AggregationMode string    // Data aggregation mode
-	DataType        string    // Data type that the leaderboard should accept
 	Ordering        string    // Leaderboard ranking order
 }
 
@@ -90,10 +82,6 @@ func (l NewLeaderboardData) validate() error {
 
 	if !slices.Contains(AggregationModes, l.AggregationMode) {
 		errList = append(errList, ErrInvalidAggregationMode)
-	}
-
-	if !slices.Contains(DataTypes, l.DataType) {
-		errList = append(errList, ErrInvalidDataType)
 	}
 
 	if !slices.Contains(OrderingModes, l.Ordering) {

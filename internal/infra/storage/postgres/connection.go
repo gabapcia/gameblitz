@@ -3,9 +3,9 @@ package postgres
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/gabarcia/metagaming-api/internal/infra/storage/postgres/internal/sqlc"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type connection struct {

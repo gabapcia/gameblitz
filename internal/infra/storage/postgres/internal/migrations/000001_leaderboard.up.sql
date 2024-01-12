@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS "leaderboards" (
     "start_at" TIMESTAMPTZ NOT NULL,
     "end_at" TIMESTAMPTZ DEFAULT NULL,
     "aggregation_mode" VARCHAR NOT NULL,
-    "data_type" VARCHAR NOT NULL,
     "ordering" VARCHAR NOT NULL,
 
     CONSTRAINT "game_id_check" CHECK (TRIM("game_id") <> ''),

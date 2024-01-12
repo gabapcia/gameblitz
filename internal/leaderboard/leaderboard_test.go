@@ -19,7 +19,6 @@ func TestValidate(t *testing.T) {
 			StartAt:         time.Now(),
 			EndAt:           time.Time{},
 			AggregationMode: AggregationModeMax,
-			DataType:        DataTypeInt,
 			Ordering:        OrderingDesc,
 		}
 
@@ -34,7 +33,6 @@ func TestValidate(t *testing.T) {
 			StartAt:         time.Time{},
 			EndAt:           time.Time{},
 			AggregationMode: "INVALID",
-			DataType:        "INVALID",
 			Ordering:        "INVALID",
 		}
 
@@ -43,7 +41,6 @@ func TestValidate(t *testing.T) {
 		assert.ErrorIs(t, data.validate(), ErrInvalidName)
 		assert.ErrorIs(t, data.validate(), ErrInvalidStartDate)
 		assert.ErrorIs(t, data.validate(), ErrInvalidAggregationMode)
-		assert.ErrorIs(t, data.validate(), ErrInvalidDataType)
 		assert.ErrorIs(t, data.validate(), ErrInvalidOrdering)
 	})
 
@@ -55,7 +52,6 @@ func TestValidate(t *testing.T) {
 			StartAt:         time.Now(),
 			EndAt:           time.Now().Add(-24 * time.Hour),
 			AggregationMode: AggregationModeMax,
-			DataType:        DataTypeInt,
 			Ordering:        OrderingDesc,
 		}
 
@@ -75,7 +71,6 @@ func TestBuildCreateFunc(t *testing.T) {
 			StartAt:         time.Now(),
 			EndAt:           time.Time{},
 			AggregationMode: AggregationModeMax,
-			DataType:        DataTypeInt,
 			Ordering:        OrderingDesc,
 		}
 	)
@@ -90,7 +85,6 @@ func TestBuildCreateFunc(t *testing.T) {
 				StartAt:         data.StartAt,
 				EndAt:           data.EndAt,
 				AggregationMode: data.AggregationMode,
-				DataType:        data.DataType,
 				Ordering:        data.Ordering,
 			}, nil
 		})
@@ -139,7 +133,6 @@ func TestBuildGetByIDAndGameIDFunc(t *testing.T) {
 			StartAt:         time.Now(),
 			EndAt:           time.Time{},
 			AggregationMode: AggregationModeMax,
-			DataType:        DataTypeInt,
 			Ordering:        OrderingDesc,
 		}
 	)

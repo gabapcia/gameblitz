@@ -3,11 +3,11 @@ package rest
 import (
 	"fmt"
 
+	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"go.uber.org/zap"
-
-	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 )
 
 const (

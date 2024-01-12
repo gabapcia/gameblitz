@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
