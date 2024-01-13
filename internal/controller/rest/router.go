@@ -47,8 +47,9 @@ func App(config Config) *fiber.App {
 	app.Use(recover.New())
 	app.Get("/docs/*", swagger.HandlerDefault)
 	app.Use(cache.New(cache.Config{
-		Expiration: config.CacheExpiration,
-		Storage:    config.CacheSorage,
+		Expiration:   config.CacheExpiration,
+		Storage:      config.CacheSorage,
+		CacheControl: true,
 	}))
 
 	api := app.Group("/api/v1")

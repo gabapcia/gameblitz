@@ -10,6 +10,10 @@ import (
 func (c connection) Get(key string) ([]byte, error) {
 	data, err := c.client.Get(key)
 	if err != nil {
+		if errors.Is(err, memcache.ErrCacheMiss) {
+			err = nil
+		}
+
 		return nil, err
 	}
 
