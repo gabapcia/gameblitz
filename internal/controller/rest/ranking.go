@@ -59,11 +59,6 @@ func buildGetRankingHandler(rankingFunc ranking.RankingFunc) fiber.Handler {
 			limit       = c.QueryInt("limit", 10)
 		)
 
-		var body UpsertPlayerRankReq
-		if err := c.BodyParser(&body); err != nil {
-			return err
-		}
-
 		rankings, err := rankingFunc(c.Context(), leaderboard, int64(page), int64(limit))
 		if err != nil {
 			return err

@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -24,11 +25,14 @@ func (e ErrorResponse) withDetails(details ...string) ErrorResponse {
 }
 
 var (
-	ErrorResponseInternalServerError = ErrorResponse{Code: "0.1", Message: "Unknown error"}
+	ErrorResponseInternalServerError = ErrorResponse{Code: "0.0", Message: "Unknown error"}
+	ErrorResponseInvalidRequestBody  = ErrorResponse{Code: "0.1", Message: "Invalid request body"}
 )
 
 func buildErrorHandler() fiber.ErrorHandler {
 	return func(c *fiber.Ctx, err error) error {
+		var jsonErr *json.SyntaxError
+
 		switch {
 		// Ranking
 		case errors.Is(err, ranking.ErrLeaderboardClosed):
@@ -42,6 +46,8 @@ func buildErrorHandler() fiber.ErrorHandler {
 			validationErrorMessages := strings.Split(err.Error(), "\n")
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalid.withDetails(validationErrorMessages...))
 		// Unknown
+		case errors.As(err, &jsonErr):
+			return c.Status(http.StatusBadRequest).JSON(ErrorResponseInvalidRequestBody)
 		default:
 			zap.Error(err, "unknown error")
 			return c.Status(http.StatusInternalServerError).JSON(ErrorResponseInternalServerError)

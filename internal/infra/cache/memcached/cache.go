@@ -1,17 +1,35 @@
 package memcached
 
-import "time"
+import (
+	"errors"
+	"time"
+
+	"github.com/bradfitz/gomemcache/memcache"
+)
 
 func (c connection) Get(key string) ([]byte, error) {
-	return c.Get(key)
+	data, err := c.client.Get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return data.Value, nil
 }
 
 func (c connection) Set(key string, val []byte, exp time.Duration) error {
-	return c.Set(key, val, exp)
+	return c.client.Set(&memcache.Item{
+		Key:        key,
+		Value:      val,
+		Expiration: int32(exp.Seconds()),
+	})
 }
 
 func (c connection) Delete(key string) error {
-	return c.Delete(key)
+	if err := c.client.Delete(key); err != nil && !errors.Is(err, memcache.ErrCacheMiss) {
+		return err
+	}
+
+	return nil
 }
 
 func (c connection) Reset() error {

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 
 	"github.com/gofiber/fiber/v2"
@@ -105,25 +106,46 @@ func TestBuildGetLeaderboardMiddleware(t *testing.T) {
 }
 
 func TestBuildCreateLeaderboardHandler(t *testing.T) {
+	var (
+		gameID          = uuid.NewString()
+		name            = "Test Leaderboard"
+		description     = "Test create leaderboard request"
+		startAt         = time.Now().Format(time.RFC3339)
+		endAt           = time.Now().Add(24 * time.Hour).Format(time.RFC3339)
+		aggregationMode = "MAX"
+		ordering        = "DESC"
+	)
+
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
 			CreateLeaderboardFunc: leaderboard.BuildCreateFunc(func(ctx context.Context, data leaderboard.NewLeaderboardData) (leaderboard.Leaderboard, error) {
-				return leaderboard.Leaderboard{ID: uuid.NewString()}, nil
+				return leaderboard.Leaderboard{
+					ID:              uuid.NewString(),
+					GameID:          data.GameID,
+					Name:            data.Name,
+					Description:     data.Description,
+					StartAt:         data.StartAt,
+					EndAt:           data.EndAt,
+					AggregationMode: data.AggregationMode,
+					Ordering:        data.Ordering,
+				}, nil
 			}),
 		})
 
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/leaderboards", bytes.NewBufferString(`{
-			"gameId": "66868dc7-d391-418d-b9f1-a85a4fd096e4",
-			"name": "Test Leaderboard",
-			"description": "Test create leaderboard request",
-			"startAt": "2024-01-01T00:00:00Z",
-			"endAt": null,
-			"aggregationMode": "MAX",
-			"dataType": "INT",
-			"ordering": "DESC"
-		}`))
+		reqBody, err := json.Marshal(map[string]any{
+			"name":            name,
+			"description":     description,
+			"startAt":         startAt,
+			"endAt":           endAt,
+			"aggregationMode": aggregationMode,
+			"ordering":        ordering,
+		})
+		assert.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/leaderboards", bytes.NewBuffer(reqBody))
 
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set(gameIDHeader, gameID)
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -136,18 +158,26 @@ func TestBuildCreateLeaderboardHandler(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.NotEmpty(t, data.ID)
+		assert.Equal(t, gameID, data.GameID)
+		assert.Equal(t, name, data.Name)
+		assert.Equal(t, description, data.Description)
+		assert.Equal(t, startAt, data.StartAt.Format(time.RFC3339))
+		assert.Equal(t, endAt, data.EndAt.Format(time.RFC3339))
+		assert.Equal(t, aggregationMode, data.AggregationMode)
+		assert.Equal(t, ordering, data.Ordering)
 	})
 
 	t.Run("Validation Error", func(t *testing.T) {
 		app := App(Config{
 			CreateLeaderboardFunc: leaderboard.BuildCreateFunc(func(ctx context.Context, data leaderboard.NewLeaderboardData) (leaderboard.Leaderboard, error) {
-				return leaderboard.Leaderboard{ID: uuid.NewString()}, nil
+				return leaderboard.Leaderboard{}, nil
 			}),
 		})
 
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/leaderboards", bytes.NewBufferString(`{}`))
 
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set(gameIDHeader, gameID)
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -164,25 +194,56 @@ func TestBuildCreateLeaderboardHandler(t *testing.T) {
 		assert.NotEmpty(t, data.Details)
 	})
 
+	t.Run("Invalid Request Body", func(t *testing.T) {
+		app := App(Config{
+			CreateLeaderboardFunc: leaderboard.BuildCreateFunc(func(ctx context.Context, data leaderboard.NewLeaderboardData) (leaderboard.Leaderboard, error) {
+				return leaderboard.Leaderboard{ID: uuid.NewString()}, nil
+			}),
+		})
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/leaderboards", bytes.NewBufferString(`{`))
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		var data ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&data)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseInvalidRequestBody.Code, data.Code)
+		assert.Equal(t, ErrorResponseInvalidRequestBody.Message, data.Message)
+	})
+
 	t.Run("Random Error", func(t *testing.T) {
+		zap.Start()
+		defer zap.Sync()
+
 		app := App(Config{
 			CreateLeaderboardFunc: leaderboard.BuildCreateFunc(func(ctx context.Context, data leaderboard.NewLeaderboardData) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{}, errors.New("any error")
 			}),
 		})
 
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/leaderboards", bytes.NewBufferString(`{
-			"gameId": "66868dc7-d391-418d-b9f1-a85a4fd096e4",
-			"name": "Test Leaderboard",
-			"description": "Test create leaderboard request",
-			"startAt": "2024-01-01T00:00:00Z",
-			"endAt": null,
-			"aggregationMode": "MAX",
-			"dataType": "INT",
-			"ordering": "DESC"
-		}`))
+		reqBody, err := json.Marshal(map[string]any{
+			"name":            name,
+			"description":     description,
+			"startAt":         startAt,
+			"endAt":           endAt,
+			"aggregationMode": aggregationMode,
+			"ordering":        ordering,
+		})
+		assert.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/leaderboards", bytes.NewBuffer(reqBody))
 
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set(gameIDHeader, gameID)
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)

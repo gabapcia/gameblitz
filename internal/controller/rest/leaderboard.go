@@ -13,7 +13,6 @@ import (
 )
 
 type CreateLeaderboardReq struct {
-	GameID          string    `json:"gameId"`          // The ID from the game that is responsible for the leaderboard
 	Name            string    `json:"name"`            // Leaderboard's name
 	Description     string    `json:"description"`     // Leaderboard's description
 	StartAt         time.Time `json:"startAt"`         // Time that the leaderboard should start working
@@ -35,9 +34,9 @@ type Leaderboard struct {
 	Ordering        string     `json:"ordering"`        // Leaderboard ranking order
 }
 
-func (r CreateLeaderboardReq) toDomain() leaderboard.NewLeaderboardData {
+func (r CreateLeaderboardReq) toDomain(gameID string) leaderboard.NewLeaderboardData {
 	return leaderboard.NewLeaderboardData{
-		GameID:          r.GameID,
+		GameID:          gameID,
 		Name:            r.Name,
 		Description:     r.Description,
 		StartAt:         r.StartAt,
@@ -95,7 +94,7 @@ func buildGetLeaderboardMiddleware(cache fiber.Storage, expiration time.Duration
 				if err = json.Unmarshal(data, &leaderboard); err != nil {
 					zap.Error(err, "unmarshal cached leaderboard error")
 				} else {
-					c.Locals("leaderboard", data)
+					c.Locals("leaderboard", leaderboard)
 					return c.Next()
 				}
 			}
@@ -124,12 +123,17 @@ func buildGetLeaderboardMiddleware(cache fiber.Storage, expiration time.Duration
 
 func buildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		gameID := string(c.Request().Header.Peek(gameIDHeader))
+		if gameID == "" {
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalidGameID)
+		}
+
 		var body CreateLeaderboardReq
 		if err := c.BodyParser(&body); err != nil {
 			return err
 		}
 
-		leaderboard, err := createLeaderboardFunc(c.Context(), body.toDomain())
+		leaderboard, err := createLeaderboardFunc(c.Context(), body.toDomain(gameID))
 		if err != nil {
 			return err
 		}

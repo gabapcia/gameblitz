@@ -3,6 +3,8 @@ BIN_DIR=$(shell go env GOPATH)/bin
 MIGRATE=$(BIN_DIR)/migrate
 SQLC=$(BIN_DIR)/sqlc
 
+POSTGRESQL_DSN ?= postgres://metagaming:metagaming@localhost:5432/metagaming?sslmode=disable
+
 test:			## Run unit tests
 	@go test ./...
 
