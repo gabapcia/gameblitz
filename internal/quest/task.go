@@ -1,44 +1,47 @@
 package quest
 
 import (
-	"bytes"
 	"errors"
-	"io"
-	"strconv"
-	"strings"
-
-	"github.com/diegoholiveira/jsonlogic/v3"
+	"time"
 )
 
 var (
 	ErrTaskValidationError          = errors.New("task validation error")
 	ErrInvalidTaskName              = errors.New("invalid task name")
 	ErrInvalidTaskRule              = errors.New("invalid task rule")
-	ErrTaskRuleNotBoolean           = errors.New("task rule does not return a boolean value")
-	ErrBrokenTaskRuleData           = errors.New("broken rule data")
 	ErrInvalidSucessRuleDataExemple = errors.New("success exemple task rule data returned false")
 )
 
-type Task struct {
-	ID          string // Task ID
+type NewTaskData struct {
 	Name        string // Task name
 	Description string // Task details
-	DependsOn   string // ID of the task that needs to be completed before this one can be started
+	DependsOn   *int   // Array index of the task that needs to be completed before this one can be started
 	Rule        string // Task completion logic as JsonLogic. See https://jsonlogic.com/
 }
 
-func (t Task) validate(successExempleData string) error {
+type Task struct {
+	CreatedAt   time.Time // Time that the task was created
+	UpdatedAt   time.Time // Last time that the task was updated
+	DeletedAt   time.Time // Time that the task was deleted
+	ID          string    // Task ID
+	Name        string    // Task name
+	Description string    // Task details
+	DependsOn   string    // ID of the task that needs to be completed before this one can be started
+	Rule        string    // Task completion logic as JsonLogic. See https://jsonlogic.com/
+}
+
+func (t NewTaskData) validate(successExempleData string) error {
 	errList := make([]error, 0)
 
 	if t.Name == "" {
 		errList = append(errList, ErrInvalidTaskName)
 	}
 
-	if !jsonlogic.IsValid(strings.NewReader(t.Rule)) {
+	if !RuleIsValid(t.Rule) {
 		errList = append(errList, ErrInvalidTaskRule)
 	}
 
-	ok, err := t.apply(successExempleData)
+	ok, err := RuleApply(t.Rule, successExempleData)
 	if err != nil {
 		errList = append(errList, err)
 	}
@@ -52,27 +55,4 @@ func (t Task) validate(successExempleData string) error {
 	}
 
 	return errors.Join(errList...)
-}
-
-func (t Task) apply(v string) (bool, error) {
-	var (
-		rule = strings.NewReader(t.Rule)
-		data = strings.NewReader(v)
-	)
-
-	var r bytes.Buffer
-	if err := jsonlogic.Apply(rule, data, &r); err != nil {
-		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
-			err = ErrBrokenTaskRuleData
-		}
-
-		return false, err
-	}
-
-	boolValue, err := strconv.ParseBool(strings.TrimSpace(r.String()))
-	if err != nil {
-		return false, ErrTaskRuleNotBoolean
-	}
-
-	return boolValue, nil
 }

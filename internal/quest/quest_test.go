@@ -9,38 +9,38 @@ import (
 
 func TestQuestValidate(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
-		data := []string{
-			`{"killed": {"terrorists": 200}}`,
-		}
-		quest := Quest{
+		quest := NewQuestData{
 			GameID:      uuid.NewString(),
 			Name:        "Test Quest",
 			Description: "Quest description",
-			Tasks: []Task{
+			Tasks: []NewTaskData{
 				{
 					Name:        "Test Task",
 					Description: "Test task description",
-					DependsOn:   "",
+					DependsOn:   nil,
 					Rule:        `{">": [{"var": "killed.terrorists"}, 150]}`,
 				},
 			},
+			TasksValidators: []string{
+				`{"killed": {"terrorists": 200}}`,
+			},
 		}
 
-		err := quest.validate(data)
+		err := quest.validate()
 		assert.NoError(t, err)
 	})
 
 	t.Run("Validation Error", func(t *testing.T) {
-		data := []string{
-			`{}`,
-		}
-		quest := Quest{
-			Tasks: []Task{
+		quest := NewQuestData{
+			Tasks: []NewTaskData{
 				{},
+			},
+			TasksValidators: []string{
+				`{}`,
 			},
 		}
 
-		err := quest.validate(data)
+		err := quest.validate()
 		// Quest errors
 		assert.ErrorIs(t, err, ErrQuestValidationError)
 		assert.ErrorIs(t, err, ErrQuestMissingGameID)
@@ -50,26 +50,26 @@ func TestQuestValidate(t *testing.T) {
 		assert.ErrorIs(t, err, ErrInvalidTaskName)
 		assert.ErrorIs(t, err, ErrInvalidTaskRule)
 		assert.ErrorIs(t, err, ErrInvalidSucessRuleDataExemple)
-		assert.ErrorIs(t, err, ErrBrokenTaskRuleData)
+		assert.ErrorIs(t, err, ErrBrokenRuleData)
 	})
 
 	t.Run("Missing Task Success Data Exemple", func(t *testing.T) {
-		data := []string{}
-		quest := Quest{
+		quest := NewQuestData{
 			GameID:      uuid.NewString(),
 			Name:        "Test Quest",
 			Description: "Quest description",
-			Tasks: []Task{
+			Tasks: []NewTaskData{
 				{
 					Name:        "Test Task",
 					Description: "Test task description",
-					DependsOn:   "",
+					DependsOn:   nil,
 					Rule:        `{">": [{"var": "killed.terrorists"}, 150]}`,
 				},
 			},
+			TasksValidators: []string{},
 		}
 
-		err := quest.validate(data)
+		err := quest.validate()
 		// Quest errors
 		assert.ErrorIs(t, err, ErrQuestValidationError)
 		assert.ErrorIs(t, err, ErrQuestTaskRuleSuceessDataIncomplete)
