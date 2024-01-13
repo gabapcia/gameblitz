@@ -8,6 +8,7 @@ import (
 
 	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+	"github.com/gabarcia/metagaming-api/internal/quest"
 	"github.com/gabarcia/metagaming-api/internal/ranking"
 
 	"github.com/gofiber/fiber/v2"
@@ -34,6 +35,10 @@ func buildErrorHandler() fiber.ErrorHandler {
 		var jsonErr *json.SyntaxError
 
 		switch {
+		// Quest
+		case errors.Is(err, quest.ErrQuestValidationError):
+			validationErrorMessages := strings.Split(err.Error(), "\n")
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalid.withDetails(validationErrorMessages...))
 		// Ranking
 		case errors.Is(err, ranking.ErrLeaderboardClosed):
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardClosed)

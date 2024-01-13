@@ -13,6 +13,7 @@ import (
 	"github.com/gabarcia/metagaming-api/internal/infra/storage/postgres"
 	"github.com/gabarcia/metagaming-api/internal/infra/storage/redis"
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+	"github.com/gabarcia/metagaming-api/internal/quest"
 	"github.com/gabarcia/metagaming-api/internal/ranking"
 )
 
@@ -75,6 +76,8 @@ func main() {
 
 		UpsertPlayerRankFunc: ranking.BuildUpsertPlayerRankFunc(redis.IncrementPlayerRankValue, redis.SetMaxPlayerRankValue, redis.SetMinPlayerRankValue),
 		RankingFunc:          ranking.BuildRankingFunc(redis.GetRanking),
+
+		CreateQuestFunc: quest.BuildCreateQuestFunc(postgres.CreateQuest),
 	}
 	if err := rest.Execute(restConfig); err != nil {
 		zap.Panic(err, "api execution failed")

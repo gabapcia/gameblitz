@@ -284,6 +284,62 @@
                     }
                 }
             }
+        },
+        "/api/v1/quests": {
+            "post": {
+                "description": "Create a quest and its tasks",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create Quest",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the leaderboard",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "New quest config data",
+                        "name": "NewQuestData",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rest.CreateQuestReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/rest.Quest"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -322,6 +378,51 @@
                 "startAt": {
                     "description": "Time that the leaderboard should start working",
                     "type": "string"
+                }
+            }
+        },
+        "rest.CreateQuestReq": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Quest details",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Quest name",
+                    "type": "string"
+                },
+                "tasks": {
+                    "description": "Quest task list",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "dependsOn": {
+                                "description": "Array index of the task that needs to be completed before this one can be started",
+                                "type": "integer"
+                            },
+                            "description": {
+                                "description": "Task details",
+                                "type": "string"
+                            },
+                            "name": {
+                                "description": "Task name",
+                                "type": "string"
+                            },
+                            "rule": {
+                                "description": "Task completion logic as JsonLogic. See https://jsonlogic.com/",
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "tasksValidators": {
+                    "description": "Quest task list success validation data",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -399,6 +500,42 @@
                 }
             }
         },
+        "rest.Quest": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "Time that the quest was created",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Quest details",
+                    "type": "string"
+                },
+                "gameId": {
+                    "description": "ID of the game responsible for the quest",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Quest ID",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Quest name",
+                    "type": "string"
+                },
+                "tasks": {
+                    "description": "Quest task list",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rest.Task"
+                    }
+                },
+                "updatedAt": {
+                    "description": "Last time that the quest was updated",
+                    "type": "string"
+                }
+            }
+        },
         "rest.Rank": {
             "type": "object",
             "properties": {
@@ -413,6 +550,39 @@
                 "value": {
                     "description": "Player rank value",
                     "type": "number"
+                }
+            }
+        },
+        "rest.Task": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "Time that the task was created",
+                    "type": "string"
+                },
+                "dependsOn": {
+                    "description": "ID of the task that needs to be completed before this one can be started",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Task details",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Task ID",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Task name",
+                    "type": "string"
+                },
+                "rule": {
+                    "description": "Task completion logic as JsonLogic. See https://jsonlogic.com/",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "Last time that the task was updated",
+                    "type": "string"
                 }
             }
         },

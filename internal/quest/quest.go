@@ -49,7 +49,7 @@ func (q NewQuestData) validate() error {
 	} else {
 		for i, task := range q.Tasks {
 			if err := task.validate(q.TasksValidators[i]); err != nil {
-				errList = append(errList, fmt.Errorf("Task #%d: %w", i, err))
+				errList = append(errList, fmt.Errorf("Task #%d\n%w", i, err))
 			}
 		}
 	}

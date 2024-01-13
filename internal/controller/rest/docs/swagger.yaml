@@ -28,6 +28,39 @@ definitions:
         description: Time that the leaderboard should start working
         type: string
     type: object
+  rest.CreateQuestReq:
+    properties:
+      description:
+        description: Quest details
+        type: string
+      name:
+        description: Quest name
+        type: string
+      tasks:
+        description: Quest task list
+        items:
+          properties:
+            dependsOn:
+              description: Array index of the task that needs to be completed before
+                this one can be started
+              type: integer
+            description:
+              description: Task details
+              type: string
+            name:
+              description: Task name
+              type: string
+            rule:
+              description: Task completion logic as JsonLogic. See https://jsonlogic.com/
+              type: string
+          type: object
+        type: array
+      tasksValidators:
+        description: Quest task list success validation data
+        items:
+          type: string
+        type: array
+    type: object
   rest.ErrorResponse:
     properties:
       code:
@@ -82,6 +115,32 @@ definitions:
         description: Last time that the leaderboard info was updated
         type: string
     type: object
+  rest.Quest:
+    properties:
+      createdAt:
+        description: Time that the quest was created
+        type: string
+      description:
+        description: Quest details
+        type: string
+      gameId:
+        description: ID of the game responsible for the quest
+        type: string
+      id:
+        description: Quest ID
+        type: string
+      name:
+        description: Quest name
+        type: string
+      tasks:
+        description: Quest task list
+        items:
+          $ref: '#/definitions/rest.Task'
+        type: array
+      updatedAt:
+        description: Last time that the quest was updated
+        type: string
+    type: object
   rest.Rank:
     properties:
       playerId:
@@ -93,6 +152,31 @@ definitions:
       value:
         description: Player rank value
         type: number
+    type: object
+  rest.Task:
+    properties:
+      createdAt:
+        description: Time that the task was created
+        type: string
+      dependsOn:
+        description: ID of the task that needs to be completed before this one can
+          be started
+        type: string
+      description:
+        description: Task details
+        type: string
+      id:
+        description: Task ID
+        type: string
+      name:
+        description: Task name
+        type: string
+      rule:
+        description: Task completion logic as JsonLogic. See https://jsonlogic.com/
+        type: string
+      updatedAt:
+        description: Last time that the task was updated
+        type: string
     type: object
   rest.UpsertPlayerRankReq:
     properties:
@@ -292,4 +376,41 @@ paths:
           schema:
             $ref: '#/definitions/rest.ErrorResponse'
       summary: Upsert Player Rank
+  /api/v1/quests:
+    post:
+      consumes:
+      - application/json
+      description: Create a quest and its tasks
+      parameters:
+      - description: Game ID responsible for the leaderboard
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: New quest config data
+        in: body
+        name: NewQuestData
+        required: true
+        schema:
+          $ref: '#/definitions/rest.CreateQuestReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/rest.Quest'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Create Quest
 swagger: "2.0"

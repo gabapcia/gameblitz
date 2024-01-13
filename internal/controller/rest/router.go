@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+	"github.com/gabarcia/metagaming-api/internal/quest"
 	"github.com/gabarcia/metagaming-api/internal/ranking"
 
 	"github.com/gofiber/fiber/v2"
@@ -31,6 +32,8 @@ type Config struct {
 
 	UpsertPlayerRankFunc ranking.UpsertPlayerRankFunc
 	RankingFunc          ranking.RankingFunc
+
+	CreateQuestFunc quest.CreateQuestFunc
 }
 
 // @title Metagaming API
@@ -54,6 +57,7 @@ func App(config Config) *fiber.App {
 
 	api := app.Group("/api/v1")
 
+	// Leaderboards
 	leaderboards := api.Group("/leaderboards")
 	leaderboards.Post("/", buildCreateLeaderboardHandler(config.CreateLeaderboardFunc))
 	leaderboards.Get("/:leaderboardId", buildGetLeaderboardHandler(config.GetLeaderboardByIDAndGameIDFunc))
@@ -62,6 +66,10 @@ func App(config Config) *fiber.App {
 	rankings := leaderboards.Group(":leaderboardId/ranking", buildGetLeaderboardMiddleware(config.CacheSorage, config.CacheExpiration, config.GetLeaderboardByIDAndGameIDFunc))
 	rankings.Get("/", buildGetRankingHandler(config.RankingFunc))
 	rankings.Post("/:playerId", buildUpsertPlayerRankHandler(config.UpsertPlayerRankFunc))
+
+	// Quests
+	quests := api.Group("/quests")
+	quests.Post("/", buildBuildCreateQuestHanlder(config.CreateQuestFunc))
 
 	return app
 }
