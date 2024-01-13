@@ -33,7 +33,7 @@ type Config struct {
 func App(config Config) *fiber.App {
 	app := fiber.New(fiber.Config{
 		DisableStartupMessage: true,
-		ErrorHandler:          BuildErrorHandler(),
+		ErrorHandler:          buildErrorHandler(),
 	})
 
 	app.Use(recover.New())
@@ -45,13 +45,13 @@ func App(config Config) *fiber.App {
 	api := app.Group("/api/v1")
 
 	leaderboards := api.Group("/leaderboards")
-	leaderboards.Post("/", BuildCreateLeaderboardHandler(config.CreateLeaderboardFunc))
-	leaderboards.Get("/:leaderboardId", BuildGetLeaderboardHandler(config.GetLeaderboardByIDAndGameIDFunc))
-	leaderboards.Delete("/:leaderboardId", BuildDeleteLeaderboardHandler(config.DeleteLeaderboardByIDAndGameIDFunc))
+	leaderboards.Post("/", buildCreateLeaderboardHandler(config.CreateLeaderboardFunc))
+	leaderboards.Get("/:leaderboardId", buildGetLeaderboardHandler(config.GetLeaderboardByIDAndGameIDFunc))
+	leaderboards.Delete("/:leaderboardId", buildDeleteLeaderboardHandler(config.DeleteLeaderboardByIDAndGameIDFunc))
 
-	rankings := leaderboards.Group(":leaderboardId/ranking", BuildGetLeaderboardMiddleware(config.CacheSorage, config.CacheExpiration, config.GetLeaderboardByIDAndGameIDFunc))
-	rankings.Get("/", BuildGetRankingHandler(config.RankingFunc))
-	rankings.Post("/:playerId", BuildUpsertPlayerRankHandler(config.UpsertPlayerRankFunc))
+	rankings := leaderboards.Group(":leaderboardId/ranking", buildGetLeaderboardMiddleware(config.CacheSorage, config.CacheExpiration, config.GetLeaderboardByIDAndGameIDFunc))
+	rankings.Get("/", buildGetRankingHandler(config.RankingFunc))
+	rankings.Post("/:playerId", buildUpsertPlayerRankHandler(config.UpsertPlayerRankFunc))
 
 	return app
 }

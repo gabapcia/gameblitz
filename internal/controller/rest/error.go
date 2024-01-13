@@ -26,7 +26,7 @@ var (
 	ErrorResponseInternalServerError = ErrorResponse{Code: "0.1", Message: "Unknown error"}
 )
 
-func BuildErrorHandler() fiber.ErrorHandler {
+func buildErrorHandler() fiber.ErrorHandler {
 	return func(c *fiber.Ctx, err error) error {
 		switch {
 		case errors.Is(err, leaderboard.ErrInvalidLeaderboardID):

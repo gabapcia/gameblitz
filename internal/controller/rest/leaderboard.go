@@ -74,7 +74,7 @@ var (
 	ErrorResponseLeaderboardInvalidGameID = ErrorResponse{Code: "1.3", Message: "Invalid Leaderboard Game ID"}
 )
 
-func BuildGetLeaderboardMiddleware(cache fiber.Storage, expiration time.Duration, getLeaderboardByIDAndGameIDFunc leaderboard.GetByIDAndGameIDFunc) fiber.Handler {
+func buildGetLeaderboardMiddleware(cache fiber.Storage, expiration time.Duration, getLeaderboardByIDAndGameIDFunc leaderboard.GetByIDAndGameIDFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			id       = c.Params("leaderboardId")
@@ -122,7 +122,7 @@ func BuildGetLeaderboardMiddleware(cache fiber.Storage, expiration time.Duration
 	}
 }
 
-func BuildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc) fiber.Handler {
+func buildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var body CreateLeaderboardReq
 		if err := c.BodyParser(&body); err != nil {
@@ -138,7 +138,7 @@ func BuildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc)
 	}
 }
 
-func BuildGetLeaderboardHandler(getLeaderboardByIDAndGameIDFunc leaderboard.GetByIDAndGameIDFunc) fiber.Handler {
+func buildGetLeaderboardHandler(getLeaderboardByIDAndGameIDFunc leaderboard.GetByIDAndGameIDFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			id     = c.Params("leaderboardId")
@@ -158,7 +158,7 @@ func BuildGetLeaderboardHandler(getLeaderboardByIDAndGameIDFunc leaderboard.GetB
 	}
 }
 
-func BuildDeleteLeaderboardHandler(deleteLeaderboardByIDAndGameIDFunc leaderboard.SoftDeleteFunc) fiber.Handler {
+func buildDeleteLeaderboardHandler(deleteLeaderboardByIDAndGameIDFunc leaderboard.SoftDeleteFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			id     = c.Params("leaderboardId")

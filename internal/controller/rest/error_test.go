@@ -36,7 +36,7 @@ func TestBuildErrorHandler(t *testing.T) {
 	zap.Start()
 	defer zap.Sync()
 
-	app := fiber.New(fiber.Config{ErrorHandler: BuildErrorHandler()})
+	app := fiber.New(fiber.Config{ErrorHandler: buildErrorHandler()})
 	app.Get("/", func(c *fiber.Ctx) error {
 		return errors.New("any error")
 	})

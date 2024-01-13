@@ -27,7 +27,7 @@ func rankFromDomain(r ranking.Rank) Rank {
 	}
 }
 
-func BuildUpsertPlayerRankHandler(upsertPlayerRankFunc ranking.UpsertPlayerRankFunc) fiber.Handler {
+func buildUpsertPlayerRankHandler(upsertPlayerRankFunc ranking.UpsertPlayerRankFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			leaderboard = c.Locals("leaderboard").(leaderboard.Leaderboard)
@@ -47,7 +47,7 @@ func BuildUpsertPlayerRankHandler(upsertPlayerRankFunc ranking.UpsertPlayerRankF
 	}
 }
 
-func BuildGetRankingHandler(rankingFunc ranking.RankingFunc) fiber.Handler {
+func buildGetRankingHandler(rankingFunc ranking.RankingFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			leaderboard = c.Locals("leaderboard").(leaderboard.Leaderboard)

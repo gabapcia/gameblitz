@@ -25,7 +25,7 @@ func TestBuildGetLeaderboardMiddleware(t *testing.T) {
 	)
 
 	t.Run("OK", func(t *testing.T) {
-		getLeaderboardMiddleware := BuildGetLeaderboardMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
+		getLeaderboardMiddleware := buildGetLeaderboardMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 			return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 		})
 
@@ -52,7 +52,7 @@ func TestBuildGetLeaderboardMiddleware(t *testing.T) {
 	})
 
 	t.Run("Missing Game ID", func(t *testing.T) {
-		getLeaderboardMiddleware := BuildGetLeaderboardMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
+		getLeaderboardMiddleware := buildGetLeaderboardMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 			return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 		})
 
@@ -77,11 +77,11 @@ func TestBuildGetLeaderboardMiddleware(t *testing.T) {
 	})
 
 	t.Run("Leaderboard Not Found", func(t *testing.T) {
-		getLeaderboardMiddleware := BuildGetLeaderboardMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
+		getLeaderboardMiddleware := buildGetLeaderboardMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 			return leaderboard.Leaderboard{}, leaderboard.ErrLeaderboardNotFound
 		})
 
-		app := fiber.New(fiber.Config{ErrorHandler: BuildErrorHandler()})
+		app := fiber.New(fiber.Config{ErrorHandler: buildErrorHandler()})
 		app.Get("/:leaderboardId", getLeaderboardMiddleware, func(c *fiber.Ctx) error {
 			leaderboard := c.Locals("leaderboard")
 			return c.Status(http.StatusOK).JSON(leaderboard)
