@@ -1,9 +1,12 @@
 package rest
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 
 	"github.com/gofiber/fiber/v2"
@@ -71,6 +74,54 @@ var (
 	ErrorResponseLeaderboardInvalidGameID = ErrorResponse{Code: "1.3", Message: "Invalid Leaderboard Game ID"}
 )
 
+func BuildGetLeaderboardMiddleware(cache fiber.Storage, expiration time.Duration, getLeaderboardByIDAndGameIDFunc leaderboard.GetByIDAndGameIDFunc) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var (
+			id       = c.Params("leaderboardId")
+			gameID   = string(c.Request().Header.Peek(gameIDHeader))
+			cacheKey = fmt.Sprintf("GetLeaderboardMiddleware:%s:%s", id, gameID)
+		)
+
+		if gameID == "" {
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalidGameID)
+		}
+
+		if cache != nil {
+			data, err := cache.Get(cacheKey)
+			if err != nil {
+				zap.Error(err, "get cache error")
+			} else {
+				var leaderboard leaderboard.Leaderboard
+				if err = json.Unmarshal(data, &leaderboard); err != nil {
+					zap.Error(err, "unmarshal cached leaderboard error")
+				} else {
+					c.Locals("leaderboard", data)
+					return c.Next()
+				}
+			}
+		}
+
+		leaderboard, err := getLeaderboardByIDAndGameIDFunc(c.Context(), id, gameID)
+		if err != nil {
+			return err
+		}
+
+		if cache != nil {
+			data, err := json.Marshal(leaderboard)
+			if err != nil {
+				zap.Error(err, "marshal leaderboard cache error")
+			} else {
+				if err = cache.Set(cacheKey, data, expiration); err != nil {
+					zap.Error(err, "unable to cache leaderboard")
+				}
+			}
+		}
+
+		c.Locals("leaderboard", leaderboard)
+		return c.Next()
+	}
+}
+
 func BuildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var body CreateLeaderboardReq
@@ -90,7 +141,7 @@ func BuildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc)
 func BuildGetLeaderboardHandler(getLeaderboardByIDAndGameIDFunc leaderboard.GetByIDAndGameIDFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
-			id     = c.Params("id")
+			id     = c.Params("leaderboardId")
 			gameID = string(c.Request().Header.Peek(gameIDHeader))
 		)
 
@@ -110,7 +161,7 @@ func BuildGetLeaderboardHandler(getLeaderboardByIDAndGameIDFunc leaderboard.GetB
 func BuildDeleteLeaderboardHandler(deleteLeaderboardByIDAndGameIDFunc leaderboard.SoftDeleteFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
-			id     = c.Params("id")
+			id     = c.Params("leaderboardId")
 			gameID = string(c.Request().Header.Peek(gameIDHeader))
 		)
 

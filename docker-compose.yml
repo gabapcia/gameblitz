@@ -14,7 +14,13 @@ services:
     image: redis:7-alpine
     ports:
       - 6379:6379
-  
+
+  # Cache
+  memcached:
+    image: memcached:1-alpine
+    ports:
+      - 11211:11211
+
   # Events
   rabbitmq:
     image: rabbitmq:3-management

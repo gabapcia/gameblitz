@@ -9,13 +9,100 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
+
+func TestBuildGetLeaderboardMiddleware(t *testing.T) {
+	var (
+		leaderboardID = uuid.NewString()
+		gameID        = uuid.NewString()
+	)
+
+	t.Run("OK", func(t *testing.T) {
+		getLeaderboardMiddleware := BuildGetLeaderboardMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
+			return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
+		})
+
+		app := fiber.New()
+		app.Get("/:leaderboardId", getLeaderboardMiddleware, func(c *fiber.Ctx) error {
+			leaderboard := c.Locals("leaderboard")
+			return c.Status(http.StatusOK).JSON(leaderboard)
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", leaderboardID), nil)
+
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var body Leaderboard
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, leaderboardID, body.ID)
+		assert.Equal(t, gameID, body.GameID)
+	})
+
+	t.Run("Missing Game ID", func(t *testing.T) {
+		getLeaderboardMiddleware := BuildGetLeaderboardMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
+			return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
+		})
+
+		app := fiber.New()
+		app.Get("/:leaderboardId", getLeaderboardMiddleware, func(c *fiber.Ctx) error {
+			leaderboard := c.Locals("leaderboard")
+			return c.Status(http.StatusOK).JSON(leaderboard)
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", leaderboardID), nil)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+
+		var body ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseLeaderboardInvalidGameID.Code, body.Code)
+		assert.Equal(t, ErrorResponseLeaderboardInvalidGameID.Message, body.Message)
+	})
+
+	t.Run("Leaderboard Not Found", func(t *testing.T) {
+		getLeaderboardMiddleware := BuildGetLeaderboardMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
+			return leaderboard.Leaderboard{}, leaderboard.ErrLeaderboardNotFound
+		})
+
+		app := fiber.New(fiber.Config{ErrorHandler: BuildErrorHandler()})
+		app.Get("/:leaderboardId", getLeaderboardMiddleware, func(c *fiber.Ctx) error {
+			leaderboard := c.Locals("leaderboard")
+			return c.Status(http.StatusOK).JSON(leaderboard)
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", leaderboardID), nil)
+
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+		var body ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseLeaderboardNotFound.Code, body.Code)
+		assert.Equal(t, ErrorResponseLeaderboardNotFound.Message, body.Message)
+	})
+}
 
 func TestBuildCreateLeaderboardHandler(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
@@ -79,7 +166,6 @@ func TestBuildCreateLeaderboardHandler(t *testing.T) {
 
 	t.Run("Random Error", func(t *testing.T) {
 		app := App(Config{
-			Logger: zap.NewNop().Sugar(),
 			CreateLeaderboardFunc: leaderboard.BuildCreateFunc(func(ctx context.Context, data leaderboard.NewLeaderboardData) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{}, errors.New("any error")
 			}),
@@ -220,7 +306,6 @@ func TestBuildGetLeaderboardHandler(t *testing.T) {
 
 	t.Run("Random Error", func(t *testing.T) {
 		app := App(Config{
-			Logger: zap.NewNop().Sugar(),
 			GetLeaderboardByIDAndGameIDFunc: leaderboard.BuildGetByIDAndGameIDFunc(func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{}, errors.New("any error")
 			}),
@@ -319,7 +404,6 @@ func TestBuildDeleteLeaderboardHandler(t *testing.T) {
 
 	t.Run("Random Error", func(t *testing.T) {
 		app := App(Config{
-			Logger: zap.NewNop().Sugar(),
 			DeleteLeaderboardByIDAndGameIDFunc: leaderboard.BuildSoftDeleteFunc(func(ctx context.Context, id, gameID string) error {
 				return errors.New("any error")
 			}),

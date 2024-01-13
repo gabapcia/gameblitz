@@ -7,9 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func TestErrorResponseWithDetails(t *testing.T) {
@@ -32,7 +33,10 @@ func TestErrorResponseWithDetails(t *testing.T) {
 }
 
 func TestBuildErrorHandler(t *testing.T) {
-	app := fiber.New(fiber.Config{ErrorHandler: BuildErrorHandler(zap.NewNop().Sugar())})
+	zap.Start()
+	defer zap.Sync()
+
+	app := fiber.New(fiber.Config{ErrorHandler: BuildErrorHandler()})
 	app.Get("/", func(c *fiber.Ctx) error {
 		return errors.New("any error")
 	})

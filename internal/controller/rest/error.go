@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 
 	"github.com/gofiber/fiber/v2"
-	"go.uber.org/zap"
 )
 
 type ErrorResponse struct {
@@ -26,7 +26,7 @@ var (
 	ErrorResponseInternalServerError = ErrorResponse{Code: "0.1", Message: "Unknown error"}
 )
 
-func BuildErrorHandler(logger *zap.SugaredLogger) fiber.ErrorHandler {
+func BuildErrorHandler() fiber.ErrorHandler {
 	return func(c *fiber.Ctx, err error) error {
 		switch {
 		case errors.Is(err, leaderboard.ErrInvalidLeaderboardID):
@@ -37,7 +37,7 @@ func BuildErrorHandler(logger *zap.SugaredLogger) fiber.ErrorHandler {
 			validationErrorMessages := strings.Split(err.Error(), "\n")
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalid.withDetails(validationErrorMessages...))
 		default:
-			logger.Error(err)
+			zap.Error(err, "unknown error")
 			return c.Status(http.StatusInternalServerError).JSON(ErrorResponseInternalServerError)
 		}
 	}

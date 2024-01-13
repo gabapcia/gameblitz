@@ -2,12 +2,13 @@ package rest
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"go.uber.org/zap"
 )
 
 const (
@@ -15,8 +16,10 @@ const (
 )
 
 type Config struct {
-	Port   int
-	Logger *zap.SugaredLogger
+	Port int
+
+	CacheSorage     fiber.Storage
+	CacheExpiration time.Duration
 
 	CreateLeaderboardFunc              leaderboard.CreateFunc
 	GetLeaderboardByIDAndGameIDFunc    leaderboard.GetByIDAndGameIDFunc
@@ -26,17 +29,21 @@ type Config struct {
 func App(config Config) *fiber.App {
 	app := fiber.New(fiber.Config{
 		DisableStartupMessage: true,
-		ErrorHandler:          BuildErrorHandler(config.Logger),
+		ErrorHandler:          BuildErrorHandler(),
 	})
 
 	app.Use(recover.New())
+	app.Use(cache.New(cache.Config{
+		Expiration: config.CacheExpiration,
+		Storage:    config.CacheSorage,
+	}))
 
 	api := app.Group("/api/v1")
 
 	leaderboards := api.Group("/leaderboards")
 	leaderboards.Post("/", BuildCreateLeaderboardHandler(config.CreateLeaderboardFunc))
-	leaderboards.Get("/:id", BuildGetLeaderboardHandler(config.GetLeaderboardByIDAndGameIDFunc))
-	leaderboards.Delete("/:id", BuildDeleteLeaderboardHandler(config.DeleteLeaderboardByIDAndGameIDFunc))
+	leaderboards.Get("/:leaderboardId", BuildGetLeaderboardHandler(config.GetLeaderboardByIDAndGameIDFunc))
+	leaderboards.Delete("/:leaderboardId", BuildDeleteLeaderboardHandler(config.DeleteLeaderboardByIDAndGameIDFunc))
 
 	return app
 }
