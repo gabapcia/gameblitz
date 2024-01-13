@@ -9,16 +9,24 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Leaderboard struct {
-	CreatedAt       pgtype.Timestamptz
-	UpdatedAt       pgtype.Timestamptz
-	DeletedAt       pgtype.Timestamptz
-	ID              uuid.UUID
-	GameID          string
-	Name            string
-	Description     string
-	StartAt         pgtype.Timestamptz
-	EndAt           pgtype.Timestamptz
-	AggregationMode string
-	Ordering        string
+type Quest struct {
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	DeletedAt   pgtype.Timestamptz
+	ID          uuid.UUID
+	GameID      string
+	Name        string
+	Description string
+}
+
+type Task struct {
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	DeletedAt   pgtype.Timestamptz
+	QuestID     uuid.UUID
+	ID          uuid.UUID
+	Name        string
+	Description string
+	DependsOn   pgtype.UUID
+	Rule        string
 }
