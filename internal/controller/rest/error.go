@@ -37,6 +37,10 @@ func buildErrorHandler() fiber.ErrorHandler {
 		// Ranking
 		case errors.Is(err, ranking.ErrLeaderboardClosed):
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardClosed)
+		case errors.Is(err, ranking.ErrInvalidPageNumber):
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseRankingPageNumber)
+		case errors.Is(err, ranking.ErrInvalidLimitNumber):
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseRankingLimitNumber)
 		// Leaderboard
 		case errors.Is(err, leaderboard.ErrInvalidLeaderboardID):
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalidID)

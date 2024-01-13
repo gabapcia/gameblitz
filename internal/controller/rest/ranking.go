@@ -28,7 +28,9 @@ func rankFromDomain(r ranking.Rank) Rank {
 }
 
 var (
-	ErrorResponseLeaderboardClosed = ErrorResponse{Code: "2.0", Message: "leaderboard closed"}
+	ErrorResponseLeaderboardClosed  = ErrorResponse{Code: "2.0", Message: "leaderboard closed"}
+	ErrorResponseRankingPageNumber  = ErrorResponse{Code: "2.1", Message: "invalid page number"}
+	ErrorResponseRankingLimitNumber = ErrorResponse{Code: "2.2", Message: "invalid limit number"}
 )
 
 func buildUpsertPlayerRankHandler(upsertPlayerRankFunc ranking.UpsertPlayerRankFunc) fiber.Handler {
