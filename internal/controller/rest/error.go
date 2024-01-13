@@ -14,9 +14,9 @@ import (
 )
 
 type ErrorResponse struct {
-	Code    string   `json:"code"`
-	Message string   `json:"message"`
-	Details []string `json:"details"`
+	Code    string   `json:"code"`              // Error unique code
+	Message string   `json:"message"`           // Error message
+	Details []string `json:"details,omitempty"` // Details about the source of the error
 }
 
 func (e ErrorResponse) withDetails(details ...string) ErrorResponse {

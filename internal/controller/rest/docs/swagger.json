@@ -1,0 +1,429 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "An API to handle basic gaming features like Quests and Leaderboards",
+        "title": "Metagaming API",
+        "contact": {},
+        "license": {
+            "name": "MIT"
+        },
+        "version": "1.0"
+    },
+    "basePath": "/",
+    "paths": {
+        "/api/v1/leaderboards": {
+            "post": {
+                "description": "Create a leaderboard",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create Leaderboard",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the leaderboard",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "New leaderboard config data",
+                        "name": "NewLeaderboardData",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rest.CreateLeaderboardReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/rest.Leaderboard"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leaderboards/{leaderboardId}": {
+            "get": {
+                "description": "Return a leaderboard by id and game id",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get Leaderboard",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the leaderboard",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Leaderboard ID",
+                        "name": "leaderboardId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rest.Leaderboard"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a leaderboard by id and game id",
+                "summary": "Delete Leaderboard",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the leaderboard",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Leaderboard ID",
+                        "name": "leaderboardId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leaderboards/{leaderboardId}/ranking": {
+            "get": {
+                "description": "Get the leaderboard ranking paginated",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Leaderboard Ranking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the leaderboard",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Leaderboard ID",
+                        "name": "leaderboardId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 500,
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of rankings per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/rest.Rank"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leaderboards/{leaderboardId}/ranking/{playerId}": {
+            "post": {
+                "description": "Set or update a player's rank on the leaderboard",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Upsert Player Rank",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the leaderboard",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Leaderboard ID",
+                        "name": "leaderboardId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "playerId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Values to update the player rank",
+                        "name": "UpsertPlayerRankData",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rest.UpsertPlayerRankReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "rest.CreateLeaderboardReq": {
+            "type": "object",
+            "properties": {
+                "aggregationMode": {
+                    "description": "Data aggregation mode",
+                    "type": "string",
+                    "enum": [
+                        "INC",
+                        "MAX",
+                        "MIN"
+                    ]
+                },
+                "description": {
+                    "description": "Leaderboard's description",
+                    "type": "string"
+                },
+                "endAt": {
+                    "description": "Time that the leaderboard will be closed for new updates",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Leaderboard's name",
+                    "type": "string"
+                },
+                "ordering": {
+                    "description": "Leaderboard ranking order",
+                    "type": "string",
+                    "enum": [
+                        "ASC",
+                        "DESC"
+                    ]
+                },
+                "startAt": {
+                    "description": "Time that the leaderboard should start working",
+                    "type": "string"
+                }
+            }
+        },
+        "rest.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "Error unique code",
+                    "type": "string"
+                },
+                "details": {
+                    "description": "Details about the source of the error",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "message": {
+                    "description": "Error message",
+                    "type": "string"
+                }
+            }
+        },
+        "rest.Leaderboard": {
+            "type": "object",
+            "properties": {
+                "aggregationMode": {
+                    "description": "Data aggregation mode",
+                    "type": "string",
+                    "enum": [
+                        "INC",
+                        "MAX",
+                        "MIN"
+                    ]
+                },
+                "createdAt": {
+                    "description": "Time that the leaderboard was created",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Leaderboard's description",
+                    "type": "string"
+                },
+                "endAt": {
+                    "description": "Time that the leaderboard will be closed for new updates",
+                    "type": "string"
+                },
+                "gameId": {
+                    "description": "The ID from the game that is responsible for the leaderboard",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Leaderboard's ID",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Leaderboard's name",
+                    "type": "string"
+                },
+                "ordering": {
+                    "description": "Leaderboard ranking order",
+                    "type": "string",
+                    "enum": [
+                        "ASC",
+                        "DESC"
+                    ]
+                },
+                "startAt": {
+                    "description": "Time that the leaderboard should start working",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "Last time that the leaderboard info was updated",
+                    "type": "string"
+                }
+            }
+        },
+        "rest.Rank": {
+            "type": "object",
+            "properties": {
+                "playerId": {
+                    "description": "Player's ID",
+                    "type": "string"
+                },
+                "position": {
+                    "description": "Player ranking position",
+                    "type": "integer"
+                },
+                "value": {
+                    "description": "Player rank value",
+                    "type": "number"
+                }
+            }
+        },
+        "rest.UpsertPlayerRankReq": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "description": "Value that will be used to update the player's rank",
+                    "type": "number"
+                }
+            }
+        }
+    }
+}

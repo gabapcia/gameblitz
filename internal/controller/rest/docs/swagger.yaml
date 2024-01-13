@@ -1,0 +1,295 @@
+basePath: /
+definitions:
+  rest.CreateLeaderboardReq:
+    properties:
+      aggregationMode:
+        description: Data aggregation mode
+        enum:
+        - INC
+        - MAX
+        - MIN
+        type: string
+      description:
+        description: Leaderboard's description
+        type: string
+      endAt:
+        description: Time that the leaderboard will be closed for new updates
+        type: string
+      name:
+        description: Leaderboard's name
+        type: string
+      ordering:
+        description: Leaderboard ranking order
+        enum:
+        - ASC
+        - DESC
+        type: string
+      startAt:
+        description: Time that the leaderboard should start working
+        type: string
+    type: object
+  rest.ErrorResponse:
+    properties:
+      code:
+        description: Error unique code
+        type: string
+      details:
+        description: Details about the source of the error
+        items:
+          type: string
+        type: array
+      message:
+        description: Error message
+        type: string
+    type: object
+  rest.Leaderboard:
+    properties:
+      aggregationMode:
+        description: Data aggregation mode
+        enum:
+        - INC
+        - MAX
+        - MIN
+        type: string
+      createdAt:
+        description: Time that the leaderboard was created
+        type: string
+      description:
+        description: Leaderboard's description
+        type: string
+      endAt:
+        description: Time that the leaderboard will be closed for new updates
+        type: string
+      gameId:
+        description: The ID from the game that is responsible for the leaderboard
+        type: string
+      id:
+        description: Leaderboard's ID
+        type: string
+      name:
+        description: Leaderboard's name
+        type: string
+      ordering:
+        description: Leaderboard ranking order
+        enum:
+        - ASC
+        - DESC
+        type: string
+      startAt:
+        description: Time that the leaderboard should start working
+        type: string
+      updatedAt:
+        description: Last time that the leaderboard info was updated
+        type: string
+    type: object
+  rest.Rank:
+    properties:
+      playerId:
+        description: Player's ID
+        type: string
+      position:
+        description: Player ranking position
+        type: integer
+      value:
+        description: Player rank value
+        type: number
+    type: object
+  rest.UpsertPlayerRankReq:
+    properties:
+      value:
+        description: Value that will be used to update the player's rank
+        type: number
+    type: object
+info:
+  contact: {}
+  description: An API to handle basic gaming features like Quests and Leaderboards
+  license:
+    name: MIT
+  title: Metagaming API
+  version: "1.0"
+paths:
+  /api/v1/leaderboards:
+    post:
+      consumes:
+      - application/json
+      description: Create a leaderboard
+      parameters:
+      - description: Game ID responsible for the leaderboard
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: New leaderboard config data
+        in: body
+        name: NewLeaderboardData
+        required: true
+        schema:
+          $ref: '#/definitions/rest.CreateLeaderboardReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/rest.Leaderboard'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Create Leaderboard
+  /api/v1/leaderboards/{leaderboardId}:
+    delete:
+      description: Delete a leaderboard by id and game id
+      parameters:
+      - description: Game ID responsible for the leaderboard
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: Leaderboard ID
+        in: path
+        name: leaderboardId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Delete Leaderboard
+    get:
+      description: Return a leaderboard by id and game id
+      parameters:
+      - description: Game ID responsible for the leaderboard
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: Leaderboard ID
+        in: path
+        name: leaderboardId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.Leaderboard'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Get Leaderboard
+  /api/v1/leaderboards/{leaderboardId}/ranking:
+    get:
+      description: Get the leaderboard ranking paginated
+      parameters:
+      - description: Game ID responsible for the leaderboard
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: Leaderboard ID
+        in: path
+        name: leaderboardId
+        required: true
+        type: string
+      - default: 0
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of rankings per page
+        in: query
+        maximum: 500
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/rest.Rank'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Leaderboard Ranking
+  /api/v1/leaderboards/{leaderboardId}/ranking/{playerId}:
+    post:
+      consumes:
+      - application/json
+      description: Set or update a player's rank on the leaderboard
+      parameters:
+      - description: Game ID responsible for the leaderboard
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: Leaderboard ID
+        in: path
+        name: leaderboardId
+        required: true
+        type: string
+      - description: Player ID
+        in: path
+        name: playerId
+        required: true
+        type: string
+      - description: Values to update the player rank
+        in: body
+        name: UpsertPlayerRankData
+        required: true
+        schema:
+          $ref: '#/definitions/rest.UpsertPlayerRankReq'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Upsert Player Rank
+swagger: "2.0"

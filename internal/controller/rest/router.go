@@ -10,6 +10,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/swagger"
+
+	_ "github.com/gabarcia/metagaming-api/internal/controller/rest/docs"
 )
 
 const (
@@ -30,6 +33,11 @@ type Config struct {
 	RankingFunc          ranking.RankingFunc
 }
 
+// @title Metagaming API
+// @version 1.0
+// @license.name MIT
+// @description An API to handle basic gaming features like Quests and Leaderboards
+// @BasePath /
 func App(config Config) *fiber.App {
 	app := fiber.New(fiber.Config{
 		DisableStartupMessage: true,
@@ -37,6 +45,7 @@ func App(config Config) *fiber.App {
 	})
 
 	app.Use(recover.New())
+	app.Get("/docs/*", swagger.HandlerDefault)
 	app.Use(cache.New(cache.Config{
 		Expiration: config.CacheExpiration,
 		Storage:    config.CacheSorage,

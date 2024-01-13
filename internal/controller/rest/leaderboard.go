@@ -13,25 +13,25 @@ import (
 )
 
 type CreateLeaderboardReq struct {
-	Name            string    `json:"name"`            // Leaderboard's name
-	Description     string    `json:"description"`     // Leaderboard's description
-	StartAt         time.Time `json:"startAt"`         // Time that the leaderboard should start working
-	EndAt           time.Time `json:"endAt"`           // Time that the leaderboard will be closed for new updates
-	AggregationMode string    `json:"aggregationMode"` // Data aggregation mode
-	Ordering        string    `json:"ordering"`        // Leaderboard ranking order
+	Name            string    `json:"name"`                                // Leaderboard's name
+	Description     string    `json:"description"`                         // Leaderboard's description
+	StartAt         time.Time `json:"startAt"`                             // Time that the leaderboard should start working
+	EndAt           time.Time `json:"endAt"`                               // Time that the leaderboard will be closed for new updates
+	AggregationMode string    `json:"aggregationMode" enums:"INC,MAX,MIN"` // Data aggregation mode
+	Ordering        string    `json:"ordering" enums:"ASC,DESC"`           // Leaderboard ranking order
 }
 
 type Leaderboard struct {
-	CreatedAt       time.Time  `json:"createdAt"`       // Time that the leaderboard was created
-	UpdatedAt       time.Time  `json:"updatedAt"`       // Last time that the leaderboard info was updated
-	ID              string     `json:"id"`              // Leaderboard's ID
-	GameID          string     `json:"gameId"`          // The ID from the game that is responsible for the leaderboard
-	Name            string     `json:"name"`            // Leaderboard's name
-	Description     string     `json:"description"`     // Leaderboard's description
-	StartAt         time.Time  `json:"startAt"`         // Time that the leaderboard should start working
-	EndAt           *time.Time `json:"endAt"`           // Time that the leaderboard will be closed for new updates
-	AggregationMode string     `json:"aggregationMode"` // Data aggregation mode
-	Ordering        string     `json:"ordering"`        // Leaderboard ranking order
+	CreatedAt       time.Time  `json:"createdAt"`                           // Time that the leaderboard was created
+	UpdatedAt       time.Time  `json:"updatedAt"`                           // Last time that the leaderboard info was updated
+	ID              string     `json:"id"`                                  // Leaderboard's ID
+	GameID          string     `json:"gameId"`                              // The ID from the game that is responsible for the leaderboard
+	Name            string     `json:"name"`                                // Leaderboard's name
+	Description     string     `json:"description"`                         // Leaderboard's description
+	StartAt         time.Time  `json:"startAt"`                             // Time that the leaderboard should start working
+	EndAt           *time.Time `json:"endAt"`                               // Time that the leaderboard will be closed for new updates
+	AggregationMode string     `json:"aggregationMode" enums:"INC,MAX,MIN"` // Data aggregation mode
+	Ordering        string     `json:"ordering" enums:"ASC,DESC"`           // Leaderboard ranking order
 }
 
 func (r CreateLeaderboardReq) toDomain(gameID string) leaderboard.NewLeaderboardData {
@@ -121,6 +121,15 @@ func buildGetLeaderboardMiddleware(cache fiber.Storage, expiration time.Duration
 	}
 }
 
+// @summary Create Leaderboard
+// @description Create a leaderboard
+// @router /api/v1/leaderboards [POST]
+// @accept json
+// @produce json
+// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param NewLeaderboardData body CreateLeaderboardReq true "New leaderboard config data"
+// @success 201 {object} Leaderboard
+// @failure 400,422,500 {object} ErrorResponse
 func buildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		gameID := string(c.Request().Header.Peek(gameIDHeader))
@@ -142,6 +151,14 @@ func buildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc)
 	}
 }
 
+// @summary Get Leaderboard
+// @description Return a leaderboard by id and game id
+// @router /api/v1/leaderboards/{leaderboardId} [GET]
+// @produce json
+// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param leaderboardId path string true "Leaderboard ID"
+// @success 200 {object} Leaderboard
+// @failure 422,500 {object} ErrorResponse
 func buildGetLeaderboardHandler(getLeaderboardByIDAndGameIDFunc leaderboard.GetByIDAndGameIDFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
@@ -162,6 +179,13 @@ func buildGetLeaderboardHandler(getLeaderboardByIDAndGameIDFunc leaderboard.GetB
 	}
 }
 
+// @summary Delete Leaderboard
+// @description Delete a leaderboard by id and game id
+// @router /api/v1/leaderboards/{leaderboardId} [DELETE]
+// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param leaderboardId path string true "Leaderboard ID"
+// @success 204
+// @failure 422,500 {object} ErrorResponse
 func buildDeleteLeaderboardHandler(deleteLeaderboardByIDAndGameIDFunc leaderboard.SoftDeleteFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
