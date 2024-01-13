@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+	"github.com/gabarcia/metagaming-api/internal/ranking"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
@@ -24,6 +25,9 @@ type Config struct {
 	CreateLeaderboardFunc              leaderboard.CreateFunc
 	GetLeaderboardByIDAndGameIDFunc    leaderboard.GetByIDAndGameIDFunc
 	DeleteLeaderboardByIDAndGameIDFunc leaderboard.SoftDeleteFunc
+
+	UpsertPlayerRankFunc ranking.UpsertPlayerRankFunc
+	RankingFunc          ranking.RankingFunc
 }
 
 func App(config Config) *fiber.App {
@@ -44,6 +48,10 @@ func App(config Config) *fiber.App {
 	leaderboards.Post("/", BuildCreateLeaderboardHandler(config.CreateLeaderboardFunc))
 	leaderboards.Get("/:leaderboardId", BuildGetLeaderboardHandler(config.GetLeaderboardByIDAndGameIDFunc))
 	leaderboards.Delete("/:leaderboardId", BuildDeleteLeaderboardHandler(config.DeleteLeaderboardByIDAndGameIDFunc))
+
+	rankings := leaderboards.Group(":leaderboardId/ranking", BuildGetLeaderboardMiddleware(config.CacheSorage, config.CacheExpiration, config.GetLeaderboardByIDAndGameIDFunc))
+	rankings.Get("/", BuildGetRankingHandler(config.RankingFunc))
+	rankings.Post("/:playerId", BuildUpsertPlayerRankHandler(config.UpsertPlayerRankFunc))
 
 	return app
 }

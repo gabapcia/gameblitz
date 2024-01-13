@@ -12,6 +12,7 @@ import (
 	"github.com/gabarcia/metagaming-api/internal/infra/storage/postgres"
 	"github.com/gabarcia/metagaming-api/internal/infra/storage/redis"
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+	"github.com/gabarcia/metagaming-api/internal/ranking"
 )
 
 type Config struct {
@@ -60,6 +61,9 @@ func main() {
 		CreateLeaderboardFunc:              leaderboard.BuildCreateFunc(postgres.CreateLeaderboard),
 		GetLeaderboardByIDAndGameIDFunc:    leaderboard.BuildGetByIDAndGameIDFunc(postgres.GetLeaderboardByIDAndGameID),
 		DeleteLeaderboardByIDAndGameIDFunc: leaderboard.BuildSoftDeleteFunc(postgres.SoftDeleteLeaderboard),
+
+		UpsertPlayerRankFunc: ranking.BuildUpsertPlayerRankFunc(redis.IncrementPlayerRankValue, redis.SetMaxPlayerRankValue, redis.SetMinPlayerRankValue),
+		RankingFunc:          ranking.BuildRankingFunc(redis.GetRanking),
 	}
 	if err := rest.Execute(restConfig); err != nil {
 		zap.Panic(err, "api execution failed")
