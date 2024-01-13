@@ -33,5 +33,5 @@ func Start() {
 	}
 
 	core := ecszap.NewCore(ecszap.NewDefaultEncoderConfig(), os.Stdout, zap.InfoLevel)
-	logger = zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.PanicLevel)).Sugar()
+	logger = zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.PanicLevel), zap.AddCallerSkip(1)).Sugar()
 }

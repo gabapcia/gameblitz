@@ -7,6 +7,7 @@ import (
 
 	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+	"github.com/gabarcia/metagaming-api/internal/ranking"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -29,6 +30,10 @@ var (
 func buildErrorHandler() fiber.ErrorHandler {
 	return func(c *fiber.Ctx, err error) error {
 		switch {
+		// Ranking
+		case errors.Is(err, ranking.ErrLeaderboardClosed):
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardClosed)
+		// Leaderboard
 		case errors.Is(err, leaderboard.ErrInvalidLeaderboardID):
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalidID)
 		case errors.Is(err, leaderboard.ErrLeaderboardNotFound):
@@ -36,6 +41,7 @@ func buildErrorHandler() fiber.ErrorHandler {
 		case errors.Is(err, leaderboard.ErrValidationError):
 			validationErrorMessages := strings.Split(err.Error(), "\n")
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalid.withDetails(validationErrorMessages...))
+		// Unknown
 		default:
 			zap.Error(err, "unknown error")
 			return c.Status(http.StatusInternalServerError).JSON(ErrorResponseInternalServerError)

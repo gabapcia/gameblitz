@@ -27,6 +27,10 @@ func rankFromDomain(r ranking.Rank) Rank {
 	}
 }
 
+var (
+	ErrorResponseLeaderboardClosed = ErrorResponse{Code: "2.0", Message: "leaderboard closed"}
+)
+
 func buildUpsertPlayerRankHandler(upsertPlayerRankFunc ranking.UpsertPlayerRankFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
