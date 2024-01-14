@@ -73,6 +73,12 @@ func BuildCreateQuestFunc(storageCreateQuestFunc StorageCreateQuestFunc) CreateQ
 	}
 }
 
+func BuildGetQuestByIDAndGameIDFunc(storageGetQuestFunc StorageGetQuestFunc) GetQuestByIDAndGameIDFunc {
+	return func(ctx context.Context, id, gameID string) (Quest, error) {
+		return storageGetQuestFunc(ctx, id, gameID)
+	}
+}
+
 func BuildSoftDeleteQuestFunc(storageSoftDeleteQuestFunc StorageSoftDeleteQuestFunc) SoftDeleteQuestFunc {
 	return func(ctx context.Context, questID, gameID string) error {
 		return storageSoftDeleteQuestFunc(ctx, questID, gameID)

@@ -49,6 +49,42 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 	return i, err
 }
 
+const listTasksByQuestID = `-- name: ListTasksByQuestID :many
+SELECT created_at, updated_at, deleted_at, quest_id, id, name, description, depends_on, rule
+FROM "tasks" t
+WHERE t."quest_id" = $1 AND t."deleted_at" IS NULL
+`
+
+func (q *Queries) ListTasksByQuestID(ctx context.Context, questID uuid.UUID) ([]Task, error) {
+	rows, err := q.db.Query(ctx, listTasksByQuestID, questID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Task
+	for rows.Next() {
+		var i Task
+		if err := rows.Scan(
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.QuestID,
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.DependsOn,
+			&i.Rule,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const softDeleteTasksByQuestID = `-- name: SoftDeleteTasksByQuestID :exec
 UPDATE "tasks"
 SET

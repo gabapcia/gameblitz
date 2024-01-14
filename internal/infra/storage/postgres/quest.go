@@ -2,10 +2,13 @@ package postgres
 
 import (
 	"context"
+	"errors"
 
 	"github.com/gabarcia/metagaming-api/internal/infra/storage/postgres/internal/sqlc"
 	"github.com/gabarcia/metagaming-api/internal/quest"
+
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 func sqlcQuestToDomain(q sqlc.Quest, ts []sqlc.Task) quest.Quest {
@@ -50,6 +53,32 @@ func (c connection) CreateQuest(ctx context.Context, data quest.NewQuestData) (q
 	}
 
 	return sqlcQuestToDomain(questData, tasksData), tx.Commit(ctx)
+}
+
+func (c connection) GetQuestByIDAndGameID(ctx context.Context, id, gameID string) (quest.Quest, error) {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return quest.Quest{}, quest.ErrInvalidQuestID
+	}
+
+	questData, err := c.queries.GetQuestByIDAndGameID(ctx, sqlc.GetQuestByIDAndGameIDParams{
+		ID:     uid,
+		GameID: gameID,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = quest.ErrQuestNotFound
+		}
+
+		return quest.Quest{}, err
+	}
+
+	tasksData, err := c.queries.ListTasksByQuestID(ctx, questData.ID)
+	if err != nil {
+		return quest.Quest{}, err
+	}
+
+	return sqlcQuestToDomain(questData, tasksData), nil
 }
 
 func (c connection) SoftDeleteQuestByIDAndGameID(ctx context.Context, id, gameID string) error {

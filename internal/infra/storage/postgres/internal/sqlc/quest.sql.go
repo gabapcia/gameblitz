@@ -38,6 +38,33 @@ func (q *Queries) CreateQuest(ctx context.Context, arg CreateQuestParams) (Quest
 	return i, err
 }
 
+const getQuestByIDAndGameID = `-- name: GetQuestByIDAndGameID :one
+SELECT created_at, updated_at, deleted_at, id, game_id, name, description
+FROM "quests" q
+WHERE q."id" = $1 AND q."game_id" = $2 AND q."deleted_at" IS NULL
+LIMIT 1
+`
+
+type GetQuestByIDAndGameIDParams struct {
+	ID     uuid.UUID
+	GameID string
+}
+
+func (q *Queries) GetQuestByIDAndGameID(ctx context.Context, arg GetQuestByIDAndGameIDParams) (Quest, error) {
+	row := q.db.QueryRow(ctx, getQuestByIDAndGameID, arg.ID, arg.GameID)
+	var i Quest
+	err := row.Scan(
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.ID,
+		&i.GameID,
+		&i.Name,
+		&i.Description,
+	)
+	return i, err
+}
+
 const softDeleteQuestByIDAndGameID = `-- name: SoftDeleteQuestByIDAndGameID :execrows
 UPDATE "quests"
 SET

@@ -179,6 +179,131 @@ func TestBuildBuildCreateQuestHanlder(t *testing.T) {
 	})
 }
 
+func TestBuildBuildGetQuestHanlder(t *testing.T) {
+	var (
+		questID = uuid.NewString()
+		gameID  = uuid.NewString()
+	)
+
+	t.Run("OK", func(t *testing.T) {
+		app := App(Config{
+			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
+				return quest.Quest{ID: id, GameID: gameID}, nil
+			},
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var data Quest
+		err = json.NewDecoder(resp.Body).Decode(&data)
+		assert.NoError(t, err)
+
+		assert.Equal(t, questID, data.ID)
+		assert.Equal(t, gameID, data.GameID)
+	})
+
+	t.Run("Missing Game ID", func(t *testing.T) {
+		app := App(Config{})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+
+		var data ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&data)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseQuestInvalidGameID.Code, data.Code)
+		assert.Equal(t, ErrorResponseQuestInvalidGameID.Message, data.Message)
+	})
+
+	t.Run("Invalid Quest ID", func(t *testing.T) {
+		app := App(Config{
+			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
+				return quest.Quest{}, quest.ErrInvalidQuestID
+			},
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+
+		var data ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&data)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseQuestInvalidID.Code, data.Code)
+		assert.Equal(t, ErrorResponseQuestInvalidID.Message, data.Message)
+	})
+
+	t.Run("Quest Not Found", func(t *testing.T) {
+		app := App(Config{
+			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
+				return quest.Quest{}, quest.ErrQuestNotFound
+			},
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+		var data ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&data)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseQuestNotFound.Code, data.Code)
+		assert.Equal(t, ErrorResponseQuestNotFound.Message, data.Message)
+	})
+
+	t.Run("Random Error", func(t *testing.T) {
+		zap.Start()
+		defer zap.Sync()
+
+		app := App(Config{
+			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
+				return quest.Quest{}, errors.New("any error")
+			},
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+
+		var data ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&data)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseInternalServerError.Code, data.Code)
+		assert.Equal(t, ErrorResponseInternalServerError.Message, data.Message)
+	})
+}
+
 func TestBuildBuildDeleteQuestHanlder(t *testing.T) {
 	var (
 		questID = uuid.NewString()

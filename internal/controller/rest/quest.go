@@ -104,6 +104,34 @@ func buildBuildCreateQuestHanlder(createQuestFunc quest.CreateQuestFunc) fiber.H
 	}
 }
 
+// @summary Get Quest By ID
+// @description Get a quest and its tasks
+// @router /api/v1/quests/{questId} [GET]
+// @produce json
+// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param questId path string true "Quest ID"
+// @success 200 {object} Quest
+// @failure 404,422,500 {object} ErrorResponse
+func buildBuildGetQuestHanlder(getQuestByIDAndGameID quest.GetQuestByIDAndGameIDFunc) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var (
+			questID = c.Params("questId")
+			gameID  = string(c.Request().Header.Peek(gameIDHeader))
+		)
+
+		if gameID == "" {
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalidGameID)
+		}
+
+		quest, err := getQuestByIDAndGameID(c.Context(), questID, gameID)
+		if err != nil {
+			return err
+		}
+
+		return c.Status(http.StatusOK).JSON(questFromDomain(quest))
+	}
+}
+
 // @summary Delete Quest
 // @description Delete a quest and its tasks
 // @router /api/v1/quests/{questId} [DELETE]

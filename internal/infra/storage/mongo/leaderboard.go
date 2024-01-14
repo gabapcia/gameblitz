@@ -6,14 +6,13 @@ import (
 	"time"
 
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-const (
-	leaderboardCollectionName = "leaderboards"
-)
+const leaderboardCollectionName = "leaderboards"
 
 type Leaderboard struct {
 	CreatedAt       time.Time          `bson:"createdAt,omitempty"`

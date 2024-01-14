@@ -5,12 +5,11 @@ import (
 	"time"
 
 	"github.com/gabarcia/metagaming-api/internal/statistic"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const (
-	statisticCollectionName = "statistics"
-)
+const statisticCollectionName = "statistics"
 
 type Statistic struct {
 	CreatedAt       time.Time          `json:"createdAt,omitempty"`

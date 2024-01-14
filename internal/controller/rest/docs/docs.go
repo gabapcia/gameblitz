@@ -373,6 +373,55 @@ const docTemplate = `{
             }
         },
         "/api/v1/quests/{questId}": {
+            "get": {
+                "description": "Get a quest and its tasks",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get Quest By ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the leaderboard",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Quest ID",
+                        "name": "questId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rest.Quest"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "description": "Delete a quest and its tasks",
                 "summary": "Delete Quest",
