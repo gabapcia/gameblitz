@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gabarcia/metagaming-api/internal/statistic"
+
 	"github.com/gofiber/fiber/v2"
 )
 

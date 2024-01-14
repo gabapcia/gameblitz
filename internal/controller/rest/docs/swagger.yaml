@@ -61,6 +61,34 @@ definitions:
           type: string
         type: array
     type: object
+  rest.CreateStatisticReq:
+    properties:
+      aggregationMode:
+        description: Data aggregation mode
+        enum:
+        - SUM
+        - SUB
+        - MAX
+        - MIN
+        type: string
+      canOverflow:
+        description: Can overflow the goal?
+        type: boolean
+      description:
+        description: Statistic details
+        type: string
+      goal:
+        description: Goal value. nil means no goal
+        type: number
+      landmarks:
+        description: Statistic landmarks
+        items:
+          type: number
+        type: array
+      name:
+        description: Statistic name
+        type: string
+    type: object
   rest.ErrorResponse:
     properties:
       code:
@@ -152,6 +180,46 @@ definitions:
       value:
         description: Player rank value
         type: number
+    type: object
+  rest.Statistic:
+    properties:
+      aggregationMode:
+        description: Data aggregation mode
+        enum:
+        - SUM
+        - SUB
+        - MAX
+        - MIN
+        type: string
+      canOverflow:
+        description: Can overflow the goal?
+        type: boolean
+      createdAt:
+        description: Time that the statistic was created
+        type: string
+      description:
+        description: Statistic details
+        type: string
+      gameId:
+        description: ID of the game responsible for the statistic
+        type: string
+      goal:
+        description: Goal value. nil means no goal
+        type: number
+      id:
+        description: Statistic ID
+        type: string
+      landmarks:
+        description: Statistic landmarks
+        items:
+          type: number
+        type: array
+      name:
+        description: Statistic name
+        type: string
+      updatedAt:
+        description: Last time that the statistic was updated
+        type: string
     type: object
   rest.Task:
     properties:
@@ -492,4 +560,104 @@ paths:
           schema:
             $ref: '#/definitions/rest.ErrorResponse'
       summary: Get Quest By ID
+  /api/v1/statistics:
+    post:
+      consumes:
+      - application/json
+      description: Create a statistic
+      parameters:
+      - description: Game ID responsible for the leaderboard
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: New statistic config data
+        in: body
+        name: NewStatisticData
+        required: true
+        schema:
+          $ref: '#/definitions/rest.CreateStatisticReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/rest.Statistic'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Create Statistic
+  /api/v1/statistics/{statisticId}:
+    delete:
+      description: Delete a statistic by its id
+      parameters:
+      - description: Game ID responsible for the leaderboard
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: Statistic ID
+        in: path
+        name: statisticId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Delete Statistic
+    get:
+      description: Get a statistic by its id
+      parameters:
+      - description: Game ID responsible for the leaderboard
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: Statistic ID
+        in: path
+        name: statisticId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.Statistic'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Get Statistic By ID
 swagger: "2.0"

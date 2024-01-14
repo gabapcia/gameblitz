@@ -465,6 +465,156 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/statistics": {
+            "post": {
+                "description": "Create a statistic",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create Statistic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the leaderboard",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "New statistic config data",
+                        "name": "NewStatisticData",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rest.CreateStatisticReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/rest.Statistic"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/statistics/{statisticId}": {
+            "get": {
+                "description": "Get a statistic by its id",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get Statistic By ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the leaderboard",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Statistic ID",
+                        "name": "statisticId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rest.Statistic"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a statistic by its id",
+                "summary": "Delete Statistic",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the leaderboard",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Statistic ID",
+                        "name": "statisticId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -548,6 +698,44 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "rest.CreateStatisticReq": {
+            "type": "object",
+            "properties": {
+                "aggregationMode": {
+                    "description": "Data aggregation mode",
+                    "type": "string",
+                    "enum": [
+                        "SUM",
+                        "SUB",
+                        "MAX",
+                        "MIN"
+                    ]
+                },
+                "canOverflow": {
+                    "description": "Can overflow the goal?",
+                    "type": "boolean"
+                },
+                "description": {
+                    "description": "Statistic details",
+                    "type": "string"
+                },
+                "goal": {
+                    "description": "Goal value. nil means no goal",
+                    "type": "number"
+                },
+                "landmarks": {
+                    "description": "Statistic landmarks",
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "name": {
+                    "description": "Statistic name",
+                    "type": "string"
                 }
             }
         },
@@ -675,6 +863,60 @@ const docTemplate = `{
                 "value": {
                     "description": "Player rank value",
                     "type": "number"
+                }
+            }
+        },
+        "rest.Statistic": {
+            "type": "object",
+            "properties": {
+                "aggregationMode": {
+                    "description": "Data aggregation mode",
+                    "type": "string",
+                    "enum": [
+                        "SUM",
+                        "SUB",
+                        "MAX",
+                        "MIN"
+                    ]
+                },
+                "canOverflow": {
+                    "description": "Can overflow the goal?",
+                    "type": "boolean"
+                },
+                "createdAt": {
+                    "description": "Time that the statistic was created",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Statistic details",
+                    "type": "string"
+                },
+                "gameId": {
+                    "description": "ID of the game responsible for the statistic",
+                    "type": "string"
+                },
+                "goal": {
+                    "description": "Goal value. nil means no goal",
+                    "type": "number"
+                },
+                "id": {
+                    "description": "Statistic ID",
+                    "type": "string"
+                },
+                "landmarks": {
+                    "description": "Statistic landmarks",
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "name": {
+                    "description": "Statistic name",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "Last time that the statistic was updated",
+                    "type": "string"
                 }
             }
         },

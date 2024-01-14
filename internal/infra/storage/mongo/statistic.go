@@ -15,17 +15,17 @@ import (
 const statisticCollectionName = "statistics"
 
 type Statistic struct {
-	CreatedAt       time.Time          `json:"createdAt,omitempty"`
-	UpdatedAt       time.Time          `json:"updatedAt,omitempty"`
-	DeletedAt       time.Time          `json:"deletedAt,omitempty"`
-	ID              primitive.ObjectID `json:"_id,omitempty"`
-	GameID          string             `json:"gameId,omitempty"`
-	Name            string             `json:"name,omitempty"`
-	Description     string             `json:"description,omitempty"`
-	AggregationMode string             `json:"aggregationMode,omitempty"`
-	CanOverflow     bool               `json:"canOverflow,omitempty"`
-	Goal            *float64           `json:"goal,omitempty"`
-	Landmarks       []float64          `json:"landmarks,omitempty"`
+	CreatedAt       time.Time          `bson:"createdAt,omitempty"`
+	UpdatedAt       time.Time          `bson:"updatedAt,omitempty"`
+	DeletedAt       time.Time          `bson:"deletedAt,omitempty"`
+	ID              primitive.ObjectID `bson:"_id,omitempty"`
+	GameID          string             `bson:"gameId,omitempty"`
+	Name            string             `bson:"name,omitempty"`
+	Description     string             `bson:"description,omitempty"`
+	AggregationMode string             `bson:"aggregationMode,omitempty"`
+	CanOverflow     bool               `bson:"canOverflow,omitempty"`
+	Goal            *float64           `bson:"goal,omitempty"`
+	Landmarks       []float64          `bson:"landmarks,omitempty"`
 }
 
 func (s Statistic) toDomain() statistic.Statistic {
