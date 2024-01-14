@@ -12,6 +12,7 @@ var (
 	ErrInvalidQuestName                   = errors.New("invalid quest name")
 	ErrQuestMissingGameID                 = errors.New("missing game id")
 	ErrQuestTaskRuleSuceessDataIncomplete = errors.New("missing success data for some tasks")
+	ErrInvalidQuestID                     = errors.New("invalid quest id")
 )
 
 type NewQuestData struct {
@@ -68,5 +69,11 @@ func BuildCreateQuestFunc(storageCreateQuestFunc StorageCreateQuestFunc) CreateQ
 		}
 
 		return storageCreateQuestFunc(ctx, data)
+	}
+}
+
+func BuildSoftDeleteQuestFunc(storageSoftDeleteQuestFunc StorageSoftDeleteQuestFunc) SoftDeleteQuestFunc {
+	return func(ctx context.Context, questID, gameID string) error {
+		return storageSoftDeleteQuestFunc(ctx, questID, gameID)
 	}
 }
