@@ -714,16 +714,16 @@ const docTemplate = `{
                         "MIN"
                     ]
                 },
-                "canOverflow": {
-                    "description": "Can overflow the goal?",
-                    "type": "boolean"
-                },
                 "description": {
                     "description": "Statistic details",
                     "type": "string"
                 },
                 "goal": {
                     "description": "Goal value. nil means no goal",
+                    "type": "number"
+                },
+                "initialValue": {
+                    "description": "Initial statistic value for players. Defaults to zero on ` + "`" + `'aggregationMode' in ['SUM', 'SUB']` + "`" + `",
                     "type": "number"
                 },
                 "landmarks": {
@@ -879,10 +879,6 @@ const docTemplate = `{
                         "MIN"
                     ]
                 },
-                "canOverflow": {
-                    "description": "Can overflow the goal?",
-                    "type": "boolean"
-                },
                 "createdAt": {
                     "description": "Time that the statistic was created",
                     "type": "string"
@@ -902,6 +898,10 @@ const docTemplate = `{
                 "id": {
                     "description": "Statistic ID",
                     "type": "string"
+                },
+                "initialValue": {
+                    "description": "Initial statistic value for players. Defaults to zero on ` + "`" + `'aggregationMode' in ['SUM', 'SUB']` + "`" + `",
+                    "type": "number"
                 },
                 "landmarks": {
                     "description": "Statistic landmarks",

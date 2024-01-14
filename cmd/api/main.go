@@ -71,9 +71,9 @@ func main() {
 		CacheSorage:     memcached,
 		CacheExpiration: time.Duration(config.MemcachedCacheExpiration) * time.Second,
 
-		CreateLeaderboardFunc:              leaderboard.BuildCreateFunc(mongo.CreateLeaderboard),
-		GetLeaderboardByIDAndGameIDFunc:    leaderboard.BuildGetByIDAndGameIDFunc(mongo.GetLeaderboardByIDAndGameID),
-		DeleteLeaderboardByIDAndGameIDFunc: leaderboard.BuildSoftDeleteFunc(mongo.SoftDeleteLeaderboard),
+		CreateLeaderboardFunc:              leaderboard.BuildCreateFunc(redis.CreateLeaderboard),
+		GetLeaderboardByIDAndGameIDFunc:    leaderboard.BuildGetByIDAndGameIDFunc(redis.GetLeaderboardByIDAndGameID),
+		DeleteLeaderboardByIDAndGameIDFunc: leaderboard.BuildSoftDeleteFunc(redis.SoftDeleteLeaderboard),
 
 		UpsertPlayerRankFunc: ranking.BuildUpsertPlayerRankFunc(redis.IncrementPlayerRankValue, redis.SetMaxPlayerRankValue, redis.SetMinPlayerRankValue),
 		RankingFunc:          ranking.BuildRankingFunc(redis.GetRanking),
@@ -85,6 +85,8 @@ func main() {
 		CreateStatisticFunc:              statistic.BuildCreateStatisticFunc(mongo.CreateStatistic),
 		GetStatisticByIDAndGameIDFunc:    statistic.BuildGetStatisticByIDAndGameID(mongo.GetStatisticByIDAndGameID),
 		SoftDeleteStatisticByIDAndGameID: statistic.BuildSoftDeleteStatistic(mongo.SoftDeleteStatistic),
+
+		// UpdatePlayerStatisticProgressionFunc: statistic.BuildUpdatePlayerProgressionFunc(mongo.UpdatePlayerStatisticProgression),
 	}
 	if err := rest.Execute(restConfig); err != nil {
 		zap.Panic(err, "api execution failed")

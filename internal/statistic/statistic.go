@@ -17,13 +17,15 @@ var (
 )
 
 const (
-	AggregationModeInc = "INC"
+	AggregationModeSum = "SUM"
+	AggregationModeSub = "SUB"
 	AggregationModeMax = "MAX"
 	AggregationModeMin = "MIN"
 )
 
 var AggregationModes = []string{
-	AggregationModeInc,
+	AggregationModeSum,
+	AggregationModeSub,
 	AggregationModeMax,
 	AggregationModeMin,
 }
@@ -33,6 +35,7 @@ type NewStatisticData struct {
 	Name            string    // Statistic name
 	Description     string    // Statistic details
 	AggregationMode string    // Data aggregation mode
+	InitialValue    *float64  // Initial statistic value for players
 	Goal            *float64  // Goal value. nil means no goal
 	Landmarks       []float64 // Statistic landmarks
 }
@@ -46,6 +49,7 @@ type Statistic struct {
 	Name            string    // Statistic name
 	Description     string    // Statistic details
 	AggregationMode string    // Data aggregation mode
+	InitialValue    *float64  // Initial statistic value for players
 	Goal            *float64  // Goal value. nil means no goal
 	Landmarks       []float64 // Statistic landmarks
 }

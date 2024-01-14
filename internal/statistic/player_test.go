@@ -16,23 +16,32 @@ func TestBuildUpdatePlayerProgressionFunc(t *testing.T) {
 		playerID = uuid.NewString()
 	)
 
-	t.Run("OK Without Goals Or Landmarks And With Aggregation Mode INC", func(t *testing.T) {
+	t.Run("OK Without Goals Or Landmarks And With Aggregation Mode SUM", func(t *testing.T) {
 		updatePlayerProgressionFunc := BuildUpdatePlayerProgressionFunc(
 			nil,
-			func(ctx context.Context, statisticID, gameID, playerID string, value float64) (PlayerProgressionUpdates, error) {
-				return PlayerProgressionUpdates{
-					PlayerID:           playerID,
-					CurrentValue:       value,
-					GoalComplted:       false,
-					LandmarksCompleted: make([]float64, 0),
-				}, nil
+			func(ctx context.Context, statistic Statistic, playerID string, value float64) (PlayerProgression, PlayerProgressionUpdates, error) {
+				return PlayerProgression{}, PlayerProgressionUpdates{}, nil
 			},
-			nil,
-			nil,
 		)
 
 		statistic := Statistic{
-			AggregationMode: AggregationModeInc,
+			AggregationMode: AggregationModeSum,
+		}
+
+		err := updatePlayerProgressionFunc(ctx, statistic, playerID, rand.Float64())
+		assert.NoError(t, err)
+	})
+
+	t.Run("OK Without Goals Or Landmarks And With Aggregation Mode SUB", func(t *testing.T) {
+		updatePlayerProgressionFunc := BuildUpdatePlayerProgressionFunc(
+			nil,
+			func(ctx context.Context, statistic Statistic, playerID string, value float64) (PlayerProgression, PlayerProgressionUpdates, error) {
+				return PlayerProgression{}, PlayerProgressionUpdates{}, nil
+			},
+		)
+
+		statistic := Statistic{
+			AggregationMode: AggregationModeSub,
 		}
 
 		err := updatePlayerProgressionFunc(ctx, statistic, playerID, rand.Float64())
@@ -42,16 +51,9 @@ func TestBuildUpdatePlayerProgressionFunc(t *testing.T) {
 	t.Run("OK Without Goals Or Landmarks And With Aggregation Mode MAX", func(t *testing.T) {
 		updatePlayerProgressionFunc := BuildUpdatePlayerProgressionFunc(
 			nil,
-			nil,
-			func(ctx context.Context, statisticID, gameID, playerID string, value float64) (PlayerProgressionUpdates, error) {
-				return PlayerProgressionUpdates{
-					PlayerID:           playerID,
-					CurrentValue:       value,
-					GoalComplted:       false,
-					LandmarksCompleted: make([]float64, 0),
-				}, nil
+			func(ctx context.Context, statistic Statistic, playerID string, value float64) (PlayerProgression, PlayerProgressionUpdates, error) {
+				return PlayerProgression{}, PlayerProgressionUpdates{}, nil
 			},
-			nil,
 		)
 
 		statistic := Statistic{
@@ -65,15 +67,8 @@ func TestBuildUpdatePlayerProgressionFunc(t *testing.T) {
 	t.Run("OK Without Goals Or Landmarks And With Aggregation Mode MIN", func(t *testing.T) {
 		updatePlayerProgressionFunc := BuildUpdatePlayerProgressionFunc(
 			nil,
-			nil,
-			nil,
-			func(ctx context.Context, statisticID, gameID, playerID string, value float64) (PlayerProgressionUpdates, error) {
-				return PlayerProgressionUpdates{
-					PlayerID:           playerID,
-					CurrentValue:       value,
-					GoalComplted:       false,
-					LandmarksCompleted: make([]float64, 0),
-				}, nil
+			func(ctx context.Context, statistic Statistic, playerID string, value float64) (PlayerProgression, PlayerProgressionUpdates, error) {
+				return PlayerProgression{}, PlayerProgressionUpdates{}, nil
 			},
 		)
 
@@ -87,23 +82,16 @@ func TestBuildUpdatePlayerProgressionFunc(t *testing.T) {
 
 	t.Run("OK With Goals Or Landmarks", func(t *testing.T) {
 		updatePlayerProgressionFunc := BuildUpdatePlayerProgressionFunc(
-			func(ctx context.Context, statistic Statistic, updated PlayerProgressionUpdates) error {
+			func(ctx context.Context, statistic Statistic, progression PlayerProgression, updates PlayerProgressionUpdates) error {
 				return nil
 			},
-			func(ctx context.Context, statisticID, gameID, playerID string, value float64) (PlayerProgressionUpdates, error) {
-				return PlayerProgressionUpdates{
-					PlayerID:           playerID,
-					CurrentValue:       value,
-					GoalComplted:       true,
-					LandmarksCompleted: []float64{10, 50},
-				}, nil
+			func(ctx context.Context, statistic Statistic, playerID string, value float64) (PlayerProgression, PlayerProgressionUpdates, error) {
+				return PlayerProgression{}, PlayerProgressionUpdates{}, nil
 			},
-			nil,
-			nil,
 		)
 
 		statistic := Statistic{
-			AggregationMode: AggregationModeInc,
+			AggregationMode: AggregationModeSum,
 		}
 
 		err := updatePlayerProgressionFunc(ctx, statistic, playerID, rand.Float64())
@@ -112,8 +100,14 @@ func TestBuildUpdatePlayerProgressionFunc(t *testing.T) {
 
 	t.Run("Invalid Aggregation Mode", func(t *testing.T) {
 		var (
-			updatePlayerProgressionFunc = BuildUpdatePlayerProgressionFunc(nil, nil, nil, nil)
-			statistic                   = Statistic{AggregationMode: "INVALID"}
+			updatePlayerProgressionFunc = BuildUpdatePlayerProgressionFunc(
+				nil,
+				func(ctx context.Context, statistic Statistic, playerID string, value float64) (PlayerProgression, PlayerProgressionUpdates, error) {
+					return PlayerProgression{}, PlayerProgressionUpdates{}, ErrInvalidAggregationMode
+				},
+			)
+
+			statistic = Statistic{AggregationMode: "INVALID"}
 		)
 
 		err := updatePlayerProgressionFunc(ctx, statistic, playerID, rand.Float64())

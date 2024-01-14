@@ -41,6 +41,8 @@ type Config struct {
 	CreateStatisticFunc              statistic.CreateFunc
 	GetStatisticByIDAndGameIDFunc    statistic.GetByIDAndGameID
 	SoftDeleteStatisticByIDAndGameID statistic.SoftDeleteByIDAndGameID
+
+	UpdatePlayerStatisticProgressionFunc statistic.UpdatePlayerProgressionFunc
 }
 
 // @title Metagaming API

@@ -15,7 +15,7 @@ func TestStatisticValidete(t *testing.T) {
 			GameID:          uuid.NewString(),
 			Name:            "Test Validate Statistic",
 			Description:     "Test validate statistic unit test",
-			AggregationMode: AggregationModeInc,
+			AggregationMode: AggregationModeSum,
 			Goal:            nil,
 			Landmarks:       []float64{50, 100, 200},
 		}.validate()

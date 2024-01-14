@@ -23,6 +23,7 @@ type Statistic struct {
 	Name            string             `bson:"name,omitempty"`
 	Description     string             `bson:"description,omitempty"`
 	AggregationMode string             `bson:"aggregationMode,omitempty"`
+	InitialValue    *float64           `bson:"initialValue,omitempty"`
 	Goal            *float64           `bson:"goal,omitempty"`
 	Landmarks       []float64          `bson:"landmarks,omitempty"`
 }
@@ -37,6 +38,7 @@ func (s Statistic) toDomain() statistic.Statistic {
 		Name:            s.Name,
 		Description:     s.Description,
 		AggregationMode: s.AggregationMode,
+		InitialValue:    s.InitialValue,
 		Goal:            s.Goal,
 		Landmarks:       s.Landmarks,
 	}
@@ -50,6 +52,7 @@ func newStatisticFromDomain(s statistic.NewStatisticData) Statistic {
 		Name:            s.Name,
 		Description:     s.Description,
 		AggregationMode: s.AggregationMode,
+		InitialValue:    s.InitialValue,
 		Goal:            s.Goal,
 		Landmarks:       s.Landmarks,
 	}

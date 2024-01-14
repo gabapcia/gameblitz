@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -11,6 +12,14 @@ import (
 type connection struct {
 	client *mongo.Client
 	db     string
+}
+
+func (c connection) ensureIndexes(ctx context.Context) error {
+	if err := c.ensurePlayerStatisticIndexes(ctx); err != nil {
+		return fmt.Errorf("Player Statistics: %w", err)
+	}
+
+	return nil
 }
 
 func (c connection) Close(ctx context.Context) error {
@@ -31,5 +40,5 @@ func New(ctx context.Context, connStr, db string) (*connection, error) {
 		client: client,
 		db:     db,
 	}
-	return conn, nil
+	return conn, conn.ensureIndexes(ctx)
 }

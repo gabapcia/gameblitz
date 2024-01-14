@@ -11,7 +11,7 @@ import (
 )
 
 func buildRankingKey(leaderboardID string) string {
-	return fmt.Sprintf("ranking:%s", leaderboardID)
+	return fmt.Sprintf("leaderboard:%s:ranking", leaderboardID)
 }
 
 func (c connection) IncrementPlayerRankValue(ctx context.Context, leaderboardID, playerID string, value float64) error {

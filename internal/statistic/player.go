@@ -1,43 +1,60 @@
 package statistic
 
-import "context"
+import (
+	"context"
+	"errors"
+	"time"
+)
 
-type PlayerProgressionUpdates struct {
-	PlayerID           string    // Player ID
-	CurrentValue       float64   // The current statistic value for the user
-	GoalComplted       bool      // Has the goal just been achieved?
-	LandmarksCompleted []float64 // Landmarks that just have been reached
-}
+var (
+	ErrPlayerStatisticNotFound = errors.New("player statistic not found")
+)
+
+type (
+	PlayerProgressionUpdatesLandmark struct {
+		Value       float64
+		CompletedAt time.Time
+	}
+
+	PlayerProgressionUpdates struct {
+		GoalJustCompleted      bool
+		GoalCompletedAt        time.Time
+		LandmarksJustCompleted []PlayerProgressionUpdatesLandmark
+	}
+)
+
+type (
+	PlayerProgressionLandmark struct {
+		Value       float64
+		Completed   bool
+		CompletedAt time.Time
+	}
+
+	PlayerProgression struct {
+		StartedAt                time.Time
+		PlayerID                 string
+		StatisticID              string
+		StatisticAggregationMode string
+		CurrentValue             *float64
+		GoalValue                *float64
+		GoalCompleted            *bool
+		GoalCompletedAt          time.Time
+		Landmarks                []PlayerProgressionLandmark
+	}
+)
 
 func BuildUpdatePlayerProgressionFunc(
 	notifierPlayerProgressionUpdates NotifierPlayerProgressionUpdates,
-	storageIncreasePlayerProgressionFunc StorageIncreasePlayerProgressionFunc,
-	storageSetMaxPlayerProgressionFunc StorageSetMaxPlayerProgressionFunc,
-	storageSetMinPlayerProgressionFunc StorageSetMinPlayerProgressionFunc,
+	storageUpdatePlayerProgressionFunc StorageUpdatePlayerProgressionFunc,
 ) UpdatePlayerProgressionFunc {
 	return func(ctx context.Context, statistic Statistic, playerID string, value float64) error {
-		var (
-			playerProgressionUpdates PlayerProgressionUpdates
-			err                      error
-		)
-
-		switch statistic.AggregationMode {
-		case AggregationModeMax:
-			playerProgressionUpdates, err = storageSetMaxPlayerProgressionFunc(ctx, statistic.ID, statistic.GameID, playerID, value)
-		case AggregationModeMin:
-			playerProgressionUpdates, err = storageSetMinPlayerProgressionFunc(ctx, statistic.ID, statistic.GameID, playerID, value)
-		case AggregationModeInc:
-			playerProgressionUpdates, err = storageIncreasePlayerProgressionFunc(ctx, statistic.ID, statistic.GameID, playerID, value)
-		default:
-			return ErrInvalidAggregationMode
-		}
-
+		playerProgression, playerProgressionUpdates, err := storageUpdatePlayerProgressionFunc(ctx, statistic, playerID, value)
 		if err != nil {
 			return err
 		}
 
-		if len(playerProgressionUpdates.LandmarksCompleted) > 0 || playerProgressionUpdates.GoalComplted {
-			return notifierPlayerProgressionUpdates(ctx, statistic, playerProgressionUpdates)
+		if len(playerProgressionUpdates.LandmarksJustCompleted) > 0 || playerProgressionUpdates.GoalJustCompleted {
+			return notifierPlayerProgressionUpdates(ctx, statistic, playerProgression, playerProgressionUpdates)
 		}
 
 		return nil
