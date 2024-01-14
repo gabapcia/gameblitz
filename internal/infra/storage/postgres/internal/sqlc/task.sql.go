@@ -48,3 +48,15 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 	)
 	return i, err
 }
+
+const softDeleteTasksByQuestID = `-- name: SoftDeleteTasksByQuestID :exec
+UPDATE "tasks" t
+SET
+    t."deleted_at" = NOW()
+WHERE t."quest_id" = $1 AND t."deleted_at" IS NULL
+`
+
+func (q *Queries) SoftDeleteTasksByQuestID(ctx context.Context, questID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteTasksByQuestID, questID)
+	return err
+}

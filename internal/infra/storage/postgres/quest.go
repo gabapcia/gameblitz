@@ -5,6 +5,7 @@ import (
 
 	"github.com/gabarcia/metagaming-api/internal/infra/storage/postgres/internal/sqlc"
 	"github.com/gabarcia/metagaming-api/internal/quest"
+	"github.com/google/uuid"
 )
 
 func sqlcQuestToDomain(q sqlc.Quest, ts []sqlc.Task) quest.Quest {
@@ -49,4 +50,37 @@ func (c connection) CreateQuest(ctx context.Context, data quest.NewQuestData) (q
 	}
 
 	return sqlcQuestToDomain(questData, tasksData), tx.Commit(ctx)
+}
+
+func (c connection) SoftDeleteQuestByIDAndGameID(ctx context.Context, id, gameID string) error {
+	questID, err := uuid.Parse(id)
+	if err != nil {
+		return quest.ErrInvalidQuestID
+	}
+
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(context.Background())
+
+	queries := c.queries.WithTx(tx)
+
+	affected, err := queries.SoftDeleteQuestByIDAndGameID(ctx, sqlc.SoftDeleteQuestByIDAndGameIDParams{
+		ID:     questID,
+		GameID: gameID,
+	})
+	if err != nil {
+		return err
+	}
+
+	if affected == 0 {
+		return quest.ErrQuestNotFound
+	}
+
+	if err = queries.SoftDeleteTasksByQuestID(ctx, questID); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }

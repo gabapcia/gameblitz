@@ -13,6 +13,7 @@ var (
 	ErrQuestMissingGameID                 = errors.New("missing game id")
 	ErrQuestTaskRuleSuceessDataIncomplete = errors.New("missing success data for some tasks")
 	ErrInvalidQuestID                     = errors.New("invalid quest id")
+	ErrQuestNotFound                      = errors.New("quest not found")
 )
 
 type NewQuestData struct {

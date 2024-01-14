@@ -7,6 +7,8 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createQuest = `-- name: CreateQuest :one
@@ -34,4 +36,24 @@ func (q *Queries) CreateQuest(ctx context.Context, arg CreateQuestParams) (Quest
 		&i.Description,
 	)
 	return i, err
+}
+
+const softDeleteQuestByIDAndGameID = `-- name: SoftDeleteQuestByIDAndGameID :execrows
+UPDATE "quests" q
+SET
+    q."deleted_at" = NOW()
+WHERE q."id" = $1 AND q."game_id" = $2 AND q."deleted_at" IS NULL
+`
+
+type SoftDeleteQuestByIDAndGameIDParams struct {
+	ID     uuid.UUID
+	GameID string
+}
+
+func (q *Queries) SoftDeleteQuestByIDAndGameID(ctx context.Context, arg SoftDeleteQuestByIDAndGameIDParams) (int64, error) {
+	result, err := q.db.Exec(ctx, softDeleteQuestByIDAndGameID, arg.ID, arg.GameID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
