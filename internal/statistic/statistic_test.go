@@ -15,48 +15,12 @@ func TestStatisticValidete(t *testing.T) {
 			GameID:          uuid.NewString(),
 			Name:            "Test Validate Statistic",
 			Description:     "Test validate statistic unit test",
-			AggregationMode: AggregationModeSum,
-			CanOverflow:     true,
+			AggregationMode: AggregationModeInc,
 			Goal:            nil,
 			Landmarks:       []float64{50, 100, 200},
 		}.validate()
 
 		assert.NoError(t, err)
-	})
-
-	t.Run("Landmark Lower Than Goal", func(t *testing.T) {
-		var goal float64 = 0
-		data := NewStatisticData{
-			GameID:          uuid.NewString(),
-			Name:            "Test Validate Statistic",
-			Description:     "Test validate statistic unit test",
-			AggregationMode: AggregationModeSub,
-			CanOverflow:     false,
-			Goal:            &goal,
-			Landmarks:       []float64{100, 10, -10},
-		}
-
-		for _, aggregationMode := range []string{AggregationModeMin, AggregationModeSub} {
-			data.AggregationMode = aggregationMode
-			assert.ErrorIs(t, data.validate(), ErrInvalidLandmarkLowerThanGoal, "Aggregation Mode: %s", aggregationMode)
-		}
-	})
-
-	t.Run("Landmark Greater Than Goal", func(t *testing.T) {
-		var goal float64 = 10
-		data := NewStatisticData{
-			GameID:      uuid.NewString(),
-			Name:        "Test Validate Statistic",
-			Description: "Test validate statistic unit test",
-			CanOverflow: false,
-			Goal:        &goal,
-			Landmarks:   []float64{10, 100},
-		}
-
-		for _, aggregationMode := range []string{AggregationModeMax, AggregationModeSum} {
-			data.AggregationMode = aggregationMode
-			assert.ErrorIs(t, data.validate(), ErrInvalidLandmarkGreaterThanGoal, "Aggregation Mode: %s", aggregationMode)
-		}
 	})
 
 	t.Run("Validation Error", func(t *testing.T) {
@@ -65,7 +29,6 @@ func TestStatisticValidete(t *testing.T) {
 		assert.ErrorIs(t, err, ErrStatisticValidation)
 		assert.ErrorIs(t, err, ErrMissingGameID)
 		assert.ErrorIs(t, err, ErrInvalidName)
-		assert.ErrorIs(t, err, ErrCannotOverflowWithNoGoal)
 		assert.ErrorIs(t, err, ErrInvalidAggregationMode)
 	})
 }
@@ -86,7 +49,6 @@ func TestBuildCreateStatisticFunc(t *testing.T) {
 				Name:            data.Name,
 				Description:     data.Description,
 				AggregationMode: data.AggregationMode,
-				CanOverflow:     data.CanOverflow,
 				Goal:            data.Goal,
 				Landmarks:       data.Landmarks,
 			}, nil
@@ -97,7 +59,6 @@ func TestBuildCreateStatisticFunc(t *testing.T) {
 			Name:            "Test Create Statistic",
 			Description:     "Test build create statistic unit test",
 			AggregationMode: AggregationModeMax,
-			CanOverflow:     true,
 			Goal:            nil,
 			Landmarks:       []float64{10, 50, 100},
 		}
@@ -110,7 +71,6 @@ func TestBuildCreateStatisticFunc(t *testing.T) {
 		assert.Equal(t, data.Name, statistic.Name)
 		assert.Equal(t, data.Description, statistic.Description)
 		assert.Equal(t, data.AggregationMode, statistic.AggregationMode)
-		assert.Equal(t, data.CanOverflow, statistic.CanOverflow)
 		assert.Equal(t, data.Goal, statistic.Goal)
 		assert.Equal(t, data.Landmarks, statistic.Landmarks)
 	})
@@ -137,7 +97,6 @@ func TestBuildCreateStatisticFunc(t *testing.T) {
 			Name:            "Test Create Statistic",
 			Description:     "Test build create statistic unit test",
 			AggregationMode: AggregationModeMax,
-			CanOverflow:     true,
 			Goal:            nil,
 			Landmarks:       []float64{10, 50, 100},
 		}

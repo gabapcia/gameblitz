@@ -10,25 +10,23 @@ import (
 )
 
 type CreateStatisticReq struct {
-	Name            string    `json:"name"`                                    // Statistic name
-	Description     string    `json:"description"`                             // Statistic details
-	AggregationMode string    `json:"aggregationMode" enums:"SUM,SUB,MAX,MIN"` // Data aggregation mode
-	CanOverflow     bool      `json:"canOverflow"`                             // Can overflow the goal?
-	Goal            *float64  `json:"goal"`                                    // Goal value. nil means no goal
-	Landmarks       []float64 `json:"landmarks"`                               // Statistic landmarks
+	Name            string    `json:"name"`                                // Statistic name
+	Description     string    `json:"description"`                         // Statistic details
+	AggregationMode string    `json:"aggregationMode" enums:"INC,MAX,MIN"` // Data aggregation mode
+	Goal            *float64  `json:"goal"`                                // Goal value. nil means no goal
+	Landmarks       []float64 `json:"landmarks"`                           // Statistic landmarks
 }
 
 type Statistic struct {
-	CreatedAt       time.Time `json:"createdAt"`                               // Time that the statistic was created
-	UpdatedAt       time.Time `json:"updatedAt"`                               // Last time that the statistic was updated
-	ID              string    `json:"id"`                                      // Statistic ID
-	GameID          string    `json:"gameId"`                                  // ID of the game responsible for the statistic
-	Name            string    `json:"name"`                                    // Statistic name
-	Description     string    `json:"description"`                             // Statistic details
-	AggregationMode string    `json:"aggregationMode" enums:"SUM,SUB,MAX,MIN"` // Data aggregation mode
-	CanOverflow     bool      `json:"canOverflow"`                             // Can overflow the goal?
-	Goal            *float64  `json:"goal"`                                    // Goal value. nil means no goal
-	Landmarks       []float64 `json:"landmarks"`                               // Statistic landmarks
+	CreatedAt       time.Time `json:"createdAt"`                           // Time that the statistic was created
+	UpdatedAt       time.Time `json:"updatedAt"`                           // Last time that the statistic was updated
+	ID              string    `json:"id"`                                  // Statistic ID
+	GameID          string    `json:"gameId"`                              // ID of the game responsible for the statistic
+	Name            string    `json:"name"`                                // Statistic name
+	Description     string    `json:"description"`                         // Statistic details
+	AggregationMode string    `json:"aggregationMode" enums:"INC,MAX,MIN"` // Data aggregation mode
+	Goal            *float64  `json:"goal"`                                // Goal value. nil means no goal
+	Landmarks       []float64 `json:"landmarks"`                           // Statistic landmarks
 }
 
 func (s CreateStatisticReq) toDomain(gameID string) statistic.NewStatisticData {
@@ -37,7 +35,6 @@ func (s CreateStatisticReq) toDomain(gameID string) statistic.NewStatisticData {
 		Name:            s.Name,
 		Description:     s.Description,
 		AggregationMode: s.AggregationMode,
-		CanOverflow:     s.CanOverflow,
 		Goal:            s.Goal,
 		Landmarks:       s.Landmarks,
 	}
@@ -52,7 +49,6 @@ func statisticFromDomain(s statistic.Statistic) Statistic {
 		Name:            s.Name,
 		Description:     s.Description,
 		AggregationMode: s.AggregationMode,
-		CanOverflow:     s.CanOverflow,
 		Goal:            s.Goal,
 		Landmarks:       s.Landmarks,
 	}

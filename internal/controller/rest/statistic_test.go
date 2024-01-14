@@ -28,7 +28,6 @@ func TestBuildCreateStatisticHanlder(t *testing.T) {
 					Name:            data.Name,
 					Description:     data.Description,
 					AggregationMode: data.AggregationMode,
-					CanOverflow:     data.CanOverflow,
 					Goal:            data.Goal,
 					Landmarks:       data.Landmarks,
 				}, nil

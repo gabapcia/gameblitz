@@ -8,27 +8,22 @@ import (
 )
 
 var (
-	ErrStatisticValidation            = errors.New("invalid statistic")
-	ErrInvalidStatisticID             = errors.New("invalid id")
-	ErrInvalidName                    = errors.New("invalid name")
-	ErrMissingGameID                  = errors.New("missing game id")
-	ErrInvalidAggregationMode         = errors.New("invalid aggregation mode")
-	ErrInvalidLandmarkLowerThanGoal   = errors.New("landmark lower than goal")
-	ErrInvalidLandmarkGreaterThanGoal = errors.New("landmark greater than goal")
-	ErrCannotOverflowWithNoGoal       = errors.New("cannot overflow but there's no goal")
-	ErrStatisticNotFound              = errors.New("statistic not found")
+	ErrStatisticValidation    = errors.New("invalid statistic")
+	ErrInvalidStatisticID     = errors.New("invalid id")
+	ErrInvalidName            = errors.New("invalid name")
+	ErrMissingGameID          = errors.New("missing game id")
+	ErrInvalidAggregationMode = errors.New("invalid aggregation mode")
+	ErrStatisticNotFound      = errors.New("statistic not found")
 )
 
 const (
-	AggregationModeSum = "SUM"
-	AggregationModeSub = "SUB"
+	AggregationModeInc = "INC"
 	AggregationModeMax = "MAX"
 	AggregationModeMin = "MIN"
 )
 
 var AggregationModes = []string{
-	AggregationModeSum,
-	AggregationModeSub,
+	AggregationModeInc,
 	AggregationModeMax,
 	AggregationModeMin,
 }
@@ -38,7 +33,6 @@ type NewStatisticData struct {
 	Name            string    // Statistic name
 	Description     string    // Statistic details
 	AggregationMode string    // Data aggregation mode
-	CanOverflow     bool      // Can overflow the goal?
 	Goal            *float64  // Goal value. nil means no goal
 	Landmarks       []float64 // Statistic landmarks
 }
@@ -52,7 +46,6 @@ type Statistic struct {
 	Name            string    // Statistic name
 	Description     string    // Statistic details
 	AggregationMode string    // Data aggregation mode
-	CanOverflow     bool      // Can overflow the goal?
 	Goal            *float64  // Goal value. nil means no goal
 	Landmarks       []float64 // Statistic landmarks
 }
@@ -68,27 +61,8 @@ func (s NewStatisticData) validate() error {
 		errList = append(errList, ErrInvalidName)
 	}
 
-	if s.Goal == nil && !s.CanOverflow {
-		errList = append(errList, ErrCannotOverflowWithNoGoal)
-	}
-
 	if !slices.Contains(AggregationModes, s.AggregationMode) {
 		errList = append(errList, ErrInvalidAggregationMode)
-	} else if s.Goal != nil && !s.CanOverflow {
-		for _, landmark := range s.Landmarks {
-			switch s.AggregationMode {
-			case AggregationModeMin, AggregationModeSub:
-				if landmark < *s.Goal {
-					errList = append(errList, ErrInvalidLandmarkLowerThanGoal)
-					break
-				}
-			case AggregationModeMax, AggregationModeSum:
-				if landmark > *s.Goal {
-					errList = append(errList, ErrInvalidLandmarkGreaterThanGoal)
-					break
-				}
-			}
-		}
 	}
 
 	if len(errList) > 0 {

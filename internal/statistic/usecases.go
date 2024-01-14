@@ -11,4 +11,7 @@ type (
 
 	// Soft delete a statistic by id and game id
 	SoftDeleteByIDAndGameID func(ctx context.Context, id, gameID string) error
+
+	// Update player statistic progression using the provided value
+	UpdatePlayerProgressionFunc func(ctx context.Context, statistic Statistic, playerID string, value float64) error
 )
