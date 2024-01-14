@@ -10,6 +10,7 @@ import (
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 	"github.com/gabarcia/metagaming-api/internal/quest"
 	"github.com/gabarcia/metagaming-api/internal/ranking"
+	"github.com/gabarcia/metagaming-api/internal/statistic"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -35,6 +36,14 @@ func buildErrorHandler() fiber.ErrorHandler {
 		var jsonErr *json.SyntaxError
 
 		switch {
+		// Statistic
+		case errors.Is(err, statistic.ErrInvalidStatisticID):
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseStatisticInvalidID)
+		case errors.Is(err, statistic.ErrStatisticNotFound):
+			return c.Status(http.StatusNotFound).JSON(ErrorResponseStatisticNotFound)
+		case errors.Is(err, statistic.ErrStatisticValidation):
+			validationErrorMessages := strings.Split(err.Error(), "\n")
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseStatisticInvalid.withDetails(validationErrorMessages...))
 		// Quest
 		case errors.Is(err, quest.ErrInvalidQuestID):
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalidID)

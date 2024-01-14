@@ -11,54 +11,41 @@ import (
 	"testing"
 
 	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
-	"github.com/gabarcia/metagaming-api/internal/quest"
+	"github.com/gabarcia/metagaming-api/internal/statistic"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBuildCreateQuestHanlder(t *testing.T) {
+func TestBuildCreateStatisticHanlder(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		gameID := uuid.NewString()
 		app := App(Config{
-			CreateQuestFunc: func(ctx context.Context, data quest.NewQuestData) (quest.Quest, error) {
-				tasks := make([]quest.Task, len(data.Tasks))
-				for i := range data.Tasks {
-					tasks[i] = quest.Task{ID: uuid.NewString()}
-				}
-
-				return quest.Quest{
-					ID:     uuid.NewString(),
-					GameID: data.GameID,
-					Tasks:  tasks,
+			CreateStatisticFunc: func(ctx context.Context, data statistic.NewStatisticData) (statistic.Statistic, error) {
+				return statistic.Statistic{
+					ID:              uuid.NewString(),
+					GameID:          data.GameID,
+					Name:            data.Name,
+					Description:     data.Description,
+					AggregationMode: data.AggregationMode,
+					CanOverflow:     data.CanOverflow,
+					Goal:            data.Goal,
+					Landmarks:       data.Landmarks,
 				}, nil
 			},
 		})
 
 		body, err := json.Marshal(map[string]any{
-			"name":        "Test Create Quest",
-			"description": "Test create quest handler unit test",
-			"tasks": []map[string]any{
-				{
-					"name":        "Test Task #0",
-					"description": "Test task description",
-					"rule":        `{"==": [{"var": {"fields.bool"}}, true]}`,
-				},
-				{
-					"name":        "Test Task #0",
-					"description": "Test task description",
-					"dependsOn":   0,
-					"rule":        `{"==": [{"var": {"fields.bool"}}, true]}`,
-				},
-			},
-			"tasksValidators": []string{
-				`{"fields": {"bool": true}}`,
-				`{"fields": {"bool": true}}`,
-			},
+			"name":            "Test Create Statistic",
+			"description":     "Test create statistic handler unit test",
+			"aggregationMode": "MAX",
+			"canOverflow":     true,
+			"goal":            nil,
+			"landmarks":       []float64{10, 50, 100},
 		})
 		assert.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/quests", bytes.NewBuffer(body))
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/statistics", bytes.NewBuffer(body))
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set(gameIDHeader, gameID)
@@ -67,32 +54,21 @@ func TestBuildCreateQuestHanlder(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
-		var data Quest
+		var data Statistic
 		err = json.NewDecoder(resp.Body).Decode(&data)
 		assert.NoError(t, err)
 
 		assert.NotEmpty(t, data.ID)
 		assert.Equal(t, gameID, data.GameID)
-		assert.NotEmpty(t, data.Tasks)
 	})
 
 	t.Run("Validation Error", func(t *testing.T) {
 		gameID := uuid.NewString()
 		app := App(Config{
-			CreateQuestFunc: quest.BuildCreateQuestFunc(nil),
+			CreateStatisticFunc: statistic.BuildCreateStatisticFunc(nil),
 		})
 
-		body, err := json.Marshal(map[string]any{
-			"tasks": []map[string]any{
-				{
-					"rule": `{`,
-				},
-			},
-			"tasksValidators": []string{},
-		})
-		assert.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/quests", bytes.NewBuffer(body))
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/statistics", bytes.NewBufferString("{}"))
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set(gameIDHeader, gameID)
@@ -105,14 +81,14 @@ func TestBuildCreateQuestHanlder(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&data)
 		assert.NoError(t, err)
 
-		assert.Equal(t, ErrorResponseQuestInvalid.Code, data.Code)
-		assert.Equal(t, ErrorResponseQuestInvalid.Message, data.Message)
+		assert.Equal(t, ErrorResponseStatisticInvalid.Code, data.Code)
+		assert.Equal(t, ErrorResponseStatisticInvalid.Message, data.Message)
 	})
 
 	t.Run("Missing Game ID", func(t *testing.T) {
 		app := App(Config{})
 
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/quests", bytes.NewBufferString("{}"))
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/statistics", bytes.NewBufferString("{}"))
 
 		req.Header.Set("Content-Type", "application/json")
 
@@ -124,15 +100,15 @@ func TestBuildCreateQuestHanlder(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&data)
 		assert.NoError(t, err)
 
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Code, data.Code)
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Message, data.Message)
+		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Code, data.Code)
+		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Message, data.Message)
 	})
 
 	t.Run("Invalid Request Body", func(t *testing.T) {
 		var (
 			gameID = uuid.NewString()
 			app    = App(Config{})
-			req    = httptest.NewRequest(http.MethodPost, "/api/v1/quests", bytes.NewBufferString("{"))
+			req    = httptest.NewRequest(http.MethodPost, "/api/v1/statistics", bytes.NewBufferString("{"))
 		)
 
 		req.Header.Set("Content-Type", "application/json")
@@ -156,12 +132,12 @@ func TestBuildCreateQuestHanlder(t *testing.T) {
 
 		gameID := uuid.NewString()
 		app := App(Config{
-			CreateQuestFunc: func(ctx context.Context, data quest.NewQuestData) (quest.Quest, error) {
-				return quest.Quest{}, errors.New("any error")
+			CreateStatisticFunc: func(ctx context.Context, data statistic.NewStatisticData) (statistic.Statistic, error) {
+				return statistic.Statistic{}, errors.New("any error")
 			},
 		})
 
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/quests", bytes.NewBufferString("{}"))
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/statistics", bytes.NewBufferString("{}"))
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set(gameIDHeader, gameID)
@@ -179,20 +155,20 @@ func TestBuildCreateQuestHanlder(t *testing.T) {
 	})
 }
 
-func TestBuildGetQuestHanlder(t *testing.T) {
+func TestBuildGetStatisticHanlder(t *testing.T) {
 	var (
-		questID = uuid.NewString()
-		gameID  = uuid.NewString()
+		statisticID = uuid.NewString()
+		gameID      = uuid.NewString()
 	)
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
-			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
-				return quest.Quest{ID: id, GameID: gameID}, nil
+			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
+				return statistic.Statistic{ID: id, GameID: gameID}, nil
 			},
 		})
 
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set(gameIDHeader, gameID)
@@ -201,18 +177,18 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var data Quest
+		var data Statistic
 		err = json.NewDecoder(resp.Body).Decode(&data)
 		assert.NoError(t, err)
 
-		assert.Equal(t, questID, data.ID)
+		assert.Equal(t, statisticID, data.ID)
 		assert.Equal(t, gameID, data.GameID)
 	})
 
 	t.Run("Missing Game ID", func(t *testing.T) {
 		app := App(Config{})
 
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
 
@@ -224,18 +200,18 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&data)
 		assert.NoError(t, err)
 
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Code, data.Code)
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Message, data.Message)
+		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Code, data.Code)
+		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Message, data.Message)
 	})
 
-	t.Run("Invalid Quest ID", func(t *testing.T) {
+	t.Run("Invalid Statistic ID", func(t *testing.T) {
 		app := App(Config{
-			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
-				return quest.Quest{}, quest.ErrInvalidQuestID
+			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
+				return statistic.Statistic{}, statistic.ErrInvalidStatisticID
 			},
 		})
 
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set(gameIDHeader, gameID)
@@ -248,18 +224,18 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&data)
 		assert.NoError(t, err)
 
-		assert.Equal(t, ErrorResponseQuestInvalidID.Code, data.Code)
-		assert.Equal(t, ErrorResponseQuestInvalidID.Message, data.Message)
+		assert.Equal(t, ErrorResponseStatisticInvalidID.Code, data.Code)
+		assert.Equal(t, ErrorResponseStatisticInvalidID.Message, data.Message)
 	})
 
-	t.Run("Quest Not Found", func(t *testing.T) {
+	t.Run("Statistic Not Found", func(t *testing.T) {
 		app := App(Config{
-			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
-				return quest.Quest{}, quest.ErrQuestNotFound
+			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
+				return statistic.Statistic{}, statistic.ErrStatisticNotFound
 			},
 		})
 
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set(gameIDHeader, gameID)
@@ -272,8 +248,8 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&data)
 		assert.NoError(t, err)
 
-		assert.Equal(t, ErrorResponseQuestNotFound.Code, data.Code)
-		assert.Equal(t, ErrorResponseQuestNotFound.Message, data.Message)
+		assert.Equal(t, ErrorResponseStatisticNotFound.Code, data.Code)
+		assert.Equal(t, ErrorResponseStatisticNotFound.Message, data.Message)
 	})
 
 	t.Run("Random Error", func(t *testing.T) {
@@ -281,12 +257,12 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
-			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
-				return quest.Quest{}, errors.New("any error")
+			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
+				return statistic.Statistic{}, errors.New("any error")
 			},
 		})
 
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set(gameIDHeader, gameID)
@@ -304,20 +280,20 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 	})
 }
 
-func TestBuildDeleteQuestHanlder(t *testing.T) {
+func TestBuildDeleteStatisticHanlder(t *testing.T) {
 	var (
-		questID = uuid.NewString()
-		gameID  = uuid.NewString()
+		statisticID = uuid.NewString()
+		gameID      = uuid.NewString()
 	)
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
-			SoftDeleteQuestFunc: func(ctx context.Context, questID, gameID string) error {
+			SoftDeleteStatisticByIDAndGameID: func(ctx context.Context, id, gameID string) error {
 				return nil
 			},
 		})
 
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set(gameIDHeader, gameID)
@@ -327,14 +303,14 @@ func TestBuildDeleteQuestHanlder(t *testing.T) {
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 	})
 
-	t.Run("Invalid Quest ID", func(t *testing.T) {
+	t.Run("Invalid Statistic ID", func(t *testing.T) {
 		app := App(Config{
-			SoftDeleteQuestFunc: func(ctx context.Context, questID, gameID string) error {
-				return quest.ErrInvalidQuestID
+			SoftDeleteStatisticByIDAndGameID: func(ctx context.Context, id, gameID string) error {
+				return statistic.ErrInvalidStatisticID
 			},
 		})
 
-		req := httptest.NewRequest(http.MethodDelete, "/api/v1/quests/invalid-id", nil)
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/statistics/invalid-id", nil)
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set(gameIDHeader, gameID)
@@ -347,14 +323,14 @@ func TestBuildDeleteQuestHanlder(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&data)
 		assert.NoError(t, err)
 
-		assert.Equal(t, ErrorResponseQuestInvalidID.Code, data.Code)
-		assert.Equal(t, ErrorResponseQuestInvalidID.Message, data.Message)
+		assert.Equal(t, ErrorResponseStatisticInvalidID.Code, data.Code)
+		assert.Equal(t, ErrorResponseStatisticInvalidID.Message, data.Message)
 	})
 
 	t.Run("Missing Game ID", func(t *testing.T) {
 		app := App(Config{})
 
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
 
@@ -366,18 +342,18 @@ func TestBuildDeleteQuestHanlder(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&data)
 		assert.NoError(t, err)
 
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Code, data.Code)
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Message, data.Message)
+		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Code, data.Code)
+		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Message, data.Message)
 	})
 
 	t.Run("Not Found", func(t *testing.T) {
 		app := App(Config{
-			SoftDeleteQuestFunc: func(ctx context.Context, questID, gameID string) error {
-				return quest.ErrQuestNotFound
+			SoftDeleteStatisticByIDAndGameID: func(ctx context.Context, id, gameID string) error {
+				return statistic.ErrStatisticNotFound
 			},
 		})
 
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set(gameIDHeader, gameID)
@@ -390,8 +366,8 @@ func TestBuildDeleteQuestHanlder(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&data)
 		assert.NoError(t, err)
 
-		assert.Equal(t, ErrorResponseQuestNotFound.Code, data.Code)
-		assert.Equal(t, ErrorResponseQuestNotFound.Message, data.Message)
+		assert.Equal(t, ErrorResponseStatisticNotFound.Code, data.Code)
+		assert.Equal(t, ErrorResponseStatisticNotFound.Message, data.Message)
 	})
 
 	t.Run("Random Error", func(t *testing.T) {
@@ -399,12 +375,12 @@ func TestBuildDeleteQuestHanlder(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
-			SoftDeleteQuestFunc: func(ctx context.Context, questID, gameID string) error {
+			SoftDeleteStatisticByIDAndGameID: func(ctx context.Context, id, gameID string) error {
 				return errors.New("any error")
 			},
 		})
 
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set(gameIDHeader, gameID)

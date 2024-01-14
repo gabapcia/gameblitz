@@ -58,7 +58,10 @@ func statisticFromDomain(s statistic.Statistic) Statistic {
 }
 
 var (
-	ErrorResponseStatisticInvalidGameID = ErrorResponse{Code: "4.0", Message: "Invalid game id"}
+	ErrorResponseStatisticInvalid       = ErrorResponse{Code: "4.0", Message: "Invalid statistic"}
+	ErrorResponseStatisticInvalidGameID = ErrorResponse{Code: "4.1", Message: "Invalid game id"}
+	ErrorResponseStatisticNotFound      = ErrorResponse{Code: "4.2", Message: "Statistic not found"}
+	ErrorResponseStatisticInvalidID     = ErrorResponse{Code: "4.3", Message: "Invalid statistic id"}
 )
 
 // @summary Create Statistic
