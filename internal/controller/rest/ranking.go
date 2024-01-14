@@ -43,7 +43,7 @@ var (
 // @param playerId path string true "Player ID"
 // @param UpsertPlayerRankData body UpsertPlayerRankReq true "Values to update the player rank"
 // @success 204
-// @failure 400,422,500 {object} ErrorResponse
+// @failure 400,404,422,500 {object} ErrorResponse
 func buildUpsertPlayerRankHandler(upsertPlayerRankFunc ranking.UpsertPlayerRankFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
@@ -73,7 +73,7 @@ func buildUpsertPlayerRankHandler(upsertPlayerRankFunc ranking.UpsertPlayerRankF
 // @param page query int false "Page number" minimun(0) default(0)
 // @param limit query int false "Number of rankings per page" minimun(1) maximum(500) default(10)
 // @success 200 {array} Rank
-// @failure 400,422,500 {object} ErrorResponse
+// @failure 400,404,422,500 {object} ErrorResponse
 func buildGetRankingHandler(rankingFunc ranking.RankingFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (

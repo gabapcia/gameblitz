@@ -4,7 +4,7 @@ VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
 
 -- name: SoftDeleteTasksByQuestID :exec
-UPDATE "tasks" t
+UPDATE "tasks"
 SET
-    t."deleted_at" = NOW()
-WHERE t."quest_id" = $1 AND t."deleted_at" IS NULL;
+    "deleted_at" = NOW()
+WHERE "quest_id" = $1 AND "deleted_at" IS NULL;

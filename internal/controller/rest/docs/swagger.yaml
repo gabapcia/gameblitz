@@ -246,6 +246,10 @@ paths:
       responses:
         "204":
           description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
@@ -275,6 +279,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/rest.Leaderboard'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
@@ -322,6 +330,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/rest.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
@@ -365,6 +377,10 @@ paths:
           description: No Content
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/rest.ErrorResponse'
         "422":
@@ -413,4 +429,34 @@ paths:
           schema:
             $ref: '#/definitions/rest.ErrorResponse'
       summary: Create Quest
+  /api/v1/quests/{questId}:
+    delete:
+      description: Delete a quest and its tasks
+      parameters:
+      - description: Game ID responsible for the leaderboard
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: Quest ID
+        in: path
+        name: questId
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Delete Quest
 swagger: "2.0"

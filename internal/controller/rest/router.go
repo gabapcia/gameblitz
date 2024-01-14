@@ -33,7 +33,8 @@ type Config struct {
 	UpsertPlayerRankFunc ranking.UpsertPlayerRankFunc
 	RankingFunc          ranking.RankingFunc
 
-	CreateQuestFunc quest.CreateQuestFunc
+	CreateQuestFunc     quest.CreateQuestFunc
+	SoftDeleteQuestFunc quest.SoftDeleteQuestFunc
 }
 
 // @title Metagaming API
@@ -70,6 +71,7 @@ func App(config Config) *fiber.App {
 	// Quests
 	quests := api.Group("/quests")
 	quests.Post("/", buildBuildCreateQuestHanlder(config.CreateQuestFunc))
+	quests.Delete("/:questId", buildBuildDeleteQuestHanlder(config.SoftDeleteQuestFunc))
 
 	return app
 }

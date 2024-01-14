@@ -70,6 +70,8 @@ func questFromDomain(q quest.Quest) Quest {
 var (
 	ErrorResponseQuestInvalidGameID = ErrorResponse{Code: "3.0", Message: "Invalid Game ID"}
 	ErrorResponseQuestInvalid       = ErrorResponse{Code: "3.1", Message: "Invalid quest data"}
+	ErrorResponseQuestNotFound      = ErrorResponse{Code: "3.2", Message: "Quest not found"}
+	ErrorResponseQuestInvalidID     = ErrorResponse{Code: "3.3", Message: "Invalid quest id"}
 )
 
 // @summary Create Quest
@@ -99,5 +101,31 @@ func buildBuildCreateQuestHanlder(createQuestFunc quest.CreateQuestFunc) fiber.H
 		}
 
 		return c.Status(http.StatusCreated).JSON(questFromDomain(quest))
+	}
+}
+
+// @summary Delete Quest
+// @description Delete a quest and its tasks
+// @router /api/v1/quests/{questId} [DELETE]
+// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param questId path string true "Quest ID"
+// @success 204
+// @failure 404,422,500 {object} ErrorResponse
+func buildBuildDeleteQuestHanlder(softDeleteQuestFunc quest.SoftDeleteQuestFunc) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var (
+			questID = c.Params("questId")
+			gameID  = string(c.Request().Header.Peek(gameIDHeader))
+		)
+
+		if gameID == "" {
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalidGameID)
+		}
+
+		if err := softDeleteQuestFunc(c.Context(), questID, gameID); err != nil {
+			return err
+		}
+
+		return c.SendStatus(http.StatusNoContent)
 	}
 }

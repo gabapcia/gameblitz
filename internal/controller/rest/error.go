@@ -36,6 +36,10 @@ func buildErrorHandler() fiber.ErrorHandler {
 
 		switch {
 		// Quest
+		case errors.Is(err, quest.ErrInvalidQuestID):
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalidID)
+		case errors.Is(err, quest.ErrQuestNotFound):
+			return c.Status(http.StatusNotFound).JSON(ErrorResponseQuestNotFound)
 		case errors.Is(err, quest.ErrQuestValidationError):
 			validationErrorMessages := strings.Split(err.Error(), "\n")
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalid.withDetails(validationErrorMessages...))

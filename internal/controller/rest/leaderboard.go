@@ -158,7 +158,7 @@ func buildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc)
 // @param X-Game-ID header string true "Game ID responsible for the leaderboard"
 // @param leaderboardId path string true "Leaderboard ID"
 // @success 200 {object} Leaderboard
-// @failure 422,500 {object} ErrorResponse
+// @failure 404,422,500 {object} ErrorResponse
 func buildGetLeaderboardHandler(getLeaderboardByIDAndGameIDFunc leaderboard.GetByIDAndGameIDFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
@@ -185,7 +185,7 @@ func buildGetLeaderboardHandler(getLeaderboardByIDAndGameIDFunc leaderboard.GetB
 // @param X-Game-ID header string true "Game ID responsible for the leaderboard"
 // @param leaderboardId path string true "Leaderboard ID"
 // @success 204
-// @failure 422,500 {object} ErrorResponse
+// @failure 404,422,500 {object} ErrorResponse
 func buildDeleteLeaderboardHandler(deleteLeaderboardByIDAndGameIDFunc leaderboard.SoftDeleteFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (

@@ -39,10 +39,10 @@ func (q *Queries) CreateQuest(ctx context.Context, arg CreateQuestParams) (Quest
 }
 
 const softDeleteQuestByIDAndGameID = `-- name: SoftDeleteQuestByIDAndGameID :execrows
-UPDATE "quests" q
+UPDATE "quests"
 SET
-    q."deleted_at" = NOW()
-WHERE q."id" = $1 AND q."game_id" = $2 AND q."deleted_at" IS NULL
+    "deleted_at" = NOW()
+WHERE "id" = $1 AND "game_id" = $2 AND "deleted_at" IS NULL
 `
 
 type SoftDeleteQuestByIDAndGameIDParams struct {

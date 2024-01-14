@@ -77,7 +77,8 @@ func main() {
 		UpsertPlayerRankFunc: ranking.BuildUpsertPlayerRankFunc(redis.IncrementPlayerRankValue, redis.SetMaxPlayerRankValue, redis.SetMinPlayerRankValue),
 		RankingFunc:          ranking.BuildRankingFunc(redis.GetRanking),
 
-		CreateQuestFunc: quest.BuildCreateQuestFunc(postgres.CreateQuest),
+		CreateQuestFunc:     quest.BuildCreateQuestFunc(postgres.CreateQuest),
+		SoftDeleteQuestFunc: quest.BuildSoftDeleteQuestFunc(postgres.SoftDeleteQuestByIDAndGameID),
 	}
 	if err := rest.Execute(restConfig); err != nil {
 		zap.Panic(err, "api execution failed")
