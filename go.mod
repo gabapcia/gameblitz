@@ -10,6 +10,7 @@ require (
 	github.com/google/uuid v1.5.0
 	github.com/jackc/pgx/v5 v5.5.2
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/redis/go-redis/v9 v9.4.0
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggo/swag v1.16.2
