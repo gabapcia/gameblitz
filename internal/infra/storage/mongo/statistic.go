@@ -2,11 +2,14 @@ package mongo
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/gabarcia/metagaming-api/internal/statistic"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 const statisticCollectionName = "statistics"
@@ -66,4 +69,61 @@ func (c connection) CreateStatistic(ctx context.Context, data statistic.NewStati
 	st.ID = cursor.InsertedID.(primitive.ObjectID)
 
 	return st.toDomain(), nil
+}
+
+func (c connection) GetStatisticByIDAndGameID(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return statistic.Statistic{}, statistic.ErrInvalidStatisticID
+	}
+
+	cursor := c.client.Database(c.db).Collection(statisticCollectionName).FindOne(ctx, bson.M{
+		"_id":       bson.M{"$eq": oid},
+		"gameId":    bson.M{"$eq": gameID},
+		"deletedAt": nil,
+	})
+	if err := cursor.Err(); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			err = statistic.ErrStatisticNotFound
+		}
+
+		return statistic.Statistic{}, err
+	}
+
+	var data Statistic
+	if err := cursor.Decode(&data); err != nil {
+		return statistic.Statistic{}, err
+	}
+
+	return data.toDomain(), nil
+}
+
+func (c connection) SoftDeleteStatistic(ctx context.Context, id, gameID string) error {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return statistic.ErrInvalidStatisticID
+	}
+
+	filter := bson.M{
+		"_id":       bson.M{"$eq": oid},
+		"gameId":    bson.M{"$eq": gameID},
+		"deletedAt": nil,
+	}
+
+	update := bson.M{
+		"$currentDate": bson.M{
+			"deletedAt": true,
+		},
+	}
+
+	cursor, err := c.client.Database(c.db).Collection(statisticCollectionName).UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	if cursor.MatchedCount == 0 {
+		return statistic.ErrStatisticNotFound
+	}
+
+	return nil
 }

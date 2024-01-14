@@ -9,12 +9,14 @@ import (
 
 var (
 	ErrStatisticValidation            = errors.New("invalid statistic")
+	ErrInvalidStatisticID             = errors.New("invalid id")
 	ErrInvalidName                    = errors.New("invalid name")
 	ErrMissingGameID                  = errors.New("missing game id")
 	ErrInvalidAggregationMode         = errors.New("invalid aggregation mode")
 	ErrInvalidLandmarkLowerThanGoal   = errors.New("landmark lower than goal")
 	ErrInvalidLandmarkGreaterThanGoal = errors.New("landmark greater than goal")
 	ErrCannotOverflowWithNoGoal       = errors.New("cannot overflow but there's no goal")
+	ErrStatisticNotFound              = errors.New("statistic not found")
 )
 
 const (
