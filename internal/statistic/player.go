@@ -3,6 +3,7 @@ package statistic
 import "context"
 
 type PlayerProgressionUpdates struct {
+	PlayerID           string    // Player ID
 	CurrentValue       float64   // The current statistic value for the user
 	GoalComplted       bool      // Has the goal just been achieved?
 	LandmarksCompleted []float64 // Landmarks that just have been reached
@@ -36,7 +37,7 @@ func BuildUpdatePlayerProgressionFunc(
 		}
 
 		if len(playerProgressionUpdates.LandmarksCompleted) > 0 || playerProgressionUpdates.GoalComplted {
-			return notifierPlayerProgressionUpdates(ctx, playerID, statistic, playerProgressionUpdates)
+			return notifierPlayerProgressionUpdates(ctx, statistic, playerProgressionUpdates)
 		}
 
 		return nil
