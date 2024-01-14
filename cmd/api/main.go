@@ -4,9 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/kelseyhightower/envconfig"
-
 	"github.com/gabarcia/metagaming-api/internal/controller/rest"
+	"github.com/gabarcia/metagaming-api/internal/infra/async/rabbitmq"
 	"github.com/gabarcia/metagaming-api/internal/infra/cache/memcached"
 	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
 	"github.com/gabarcia/metagaming-api/internal/infra/storage/mongo"
@@ -16,6 +15,8 @@ import (
 	"github.com/gabarcia/metagaming-api/internal/quest"
 	"github.com/gabarcia/metagaming-api/internal/ranking"
 	"github.com/gabarcia/metagaming-api/internal/statistic"
+
+	"github.com/kelseyhightower/envconfig"
 )
 
 type Config struct {
@@ -33,6 +34,8 @@ type Config struct {
 
 	MemcachedConnStr         string `envconfig:"MEMCACHED_CONN_STR" required:"true"`
 	MemcachedCacheExpiration int    `envconfig:"MEMCACHED_EXPIRATION" required:"true"`
+
+	RabbitConnStr string `envconfig:"RABBITMQ_CONN_STR" required:"true"`
 }
 
 func main() {
@@ -52,6 +55,12 @@ func main() {
 
 	memcached := memcached.New(config.MemcachedConnStr)
 	defer memcached.Close()
+
+	rabbitmq, err := rabbitmq.NewProducer(ctx, config.RabbitConnStr)
+	if err != nil {
+		zap.Panic(err, "rabbitmq startup failed")
+	}
+	defer rabbitmq.Close()
 
 	mongo, err := mongo.New(ctx, config.MongoURI, config.MongoDB)
 	if err != nil {
@@ -86,7 +95,7 @@ func main() {
 		GetStatisticByIDAndGameIDFunc:    statistic.BuildGetStatisticByIDAndGameID(mongo.GetStatisticByIDAndGameID),
 		SoftDeleteStatisticByIDAndGameID: statistic.BuildSoftDeleteStatistic(mongo.SoftDeleteStatistic),
 
-		// UpdatePlayerStatisticProgressionFunc: statistic.BuildUpdatePlayerProgressionFunc(mongo.UpdatePlayerStatisticProgression),
+		UpdatePlayerStatisticProgressionFunc: statistic.BuildUpdatePlayerProgressionFunc(rabbitmq.PlayerProgressionUpdates, mongo.UpdatePlayerStatisticProgression),
 	}
 	if err := rest.Execute(restConfig); err != nil {
 		zap.Panic(err, "api execution failed")
