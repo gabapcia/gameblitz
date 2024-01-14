@@ -98,7 +98,7 @@ func (s NewStatisticData) validate() error {
 	return errors.Join(errList...)
 }
 
-func BuildCreateStatisticFunc(storageCreateStatisticFunc StorageCreateStatisticFunc) CreateStatisticFunc {
+func BuildCreateStatisticFunc(storageCreateStatisticFunc StorageCreateStatisticFunc) CreateFunc {
 	return func(ctx context.Context, data NewStatisticData) (Statistic, error) {
 		if err := data.validate(); err != nil {
 			return Statistic{}, err
@@ -108,13 +108,13 @@ func BuildCreateStatisticFunc(storageCreateStatisticFunc StorageCreateStatisticF
 	}
 }
 
-func BuildGetStatisticByIDAndGameID(storageGetStatisticByIDAndGameID StorageGetStatisticByIDAndGameID) GetStatisticByIDAndGameID {
+func BuildGetStatisticByIDAndGameID(storageGetStatisticByIDAndGameID StorageGetStatisticByIDAndGameID) GetByIDAndGameID {
 	return func(ctx context.Context, id, gameID string) (Statistic, error) {
 		return storageGetStatisticByIDAndGameID(ctx, id, gameID)
 	}
 }
 
-func BuildSoftDeleteStatistic(storageSoftDeleteStatistic StorageSoftDeleteStatistic) SoftDeleteStatistic {
+func BuildSoftDeleteStatistic(storageSoftDeleteStatistic StorageSoftDeleteStatistic) SoftDeleteByIDAndGameID {
 	return func(ctx context.Context, id, gameID string) error {
 		return storageSoftDeleteStatistic(ctx, id, gameID)
 	}

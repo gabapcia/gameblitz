@@ -15,6 +15,7 @@ import (
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 	"github.com/gabarcia/metagaming-api/internal/quest"
 	"github.com/gabarcia/metagaming-api/internal/ranking"
+	"github.com/gabarcia/metagaming-api/internal/statistic"
 )
 
 type Config struct {
@@ -77,8 +78,13 @@ func main() {
 		UpsertPlayerRankFunc: ranking.BuildUpsertPlayerRankFunc(redis.IncrementPlayerRankValue, redis.SetMaxPlayerRankValue, redis.SetMinPlayerRankValue),
 		RankingFunc:          ranking.BuildRankingFunc(redis.GetRanking),
 
-		CreateQuestFunc:     quest.BuildCreateQuestFunc(postgres.CreateQuest),
-		SoftDeleteQuestFunc: quest.BuildSoftDeleteQuestFunc(postgres.SoftDeleteQuestByIDAndGameID),
+		CreateQuestFunc:           quest.BuildCreateQuestFunc(postgres.CreateQuest),
+		GetQuestByIDAndGameIDFunc: quest.BuildGetQuestByIDAndGameIDFunc(postgres.GetQuestByIDAndGameID),
+		SoftDeleteQuestFunc:       quest.BuildSoftDeleteQuestFunc(postgres.SoftDeleteQuestByIDAndGameID),
+
+		CreateStatisticFunc:              statistic.BuildCreateStatisticFunc(mongo.CreateStatistic),
+		GetStatisticByIDAndGameIDFunc:    statistic.BuildGetStatisticByIDAndGameID(mongo.GetStatisticByIDAndGameID),
+		SoftDeleteStatisticByIDAndGameID: statistic.BuildSoftDeleteStatistic(mongo.SoftDeleteStatistic),
 	}
 	if err := rest.Execute(restConfig); err != nil {
 		zap.Panic(err, "api execution failed")

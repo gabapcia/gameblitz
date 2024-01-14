@@ -7,6 +7,7 @@ import (
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 	"github.com/gabarcia/metagaming-api/internal/quest"
 	"github.com/gabarcia/metagaming-api/internal/ranking"
+	"github.com/gabarcia/metagaming-api/internal/statistic"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
@@ -36,6 +37,10 @@ type Config struct {
 	CreateQuestFunc           quest.CreateQuestFunc
 	GetQuestByIDAndGameIDFunc quest.GetQuestByIDAndGameIDFunc
 	SoftDeleteQuestFunc       quest.SoftDeleteQuestFunc
+
+	CreateStatisticFunc              statistic.CreateFunc
+	GetStatisticByIDAndGameIDFunc    statistic.GetByIDAndGameID
+	SoftDeleteStatisticByIDAndGameID statistic.SoftDeleteByIDAndGameID
 }
 
 // @title Metagaming API
@@ -71,9 +76,15 @@ func App(config Config) *fiber.App {
 
 	// Quests
 	quests := api.Group("/quests")
-	quests.Post("/", buildBuildCreateQuestHanlder(config.CreateQuestFunc))
-	quests.Get("/:questId", buildBuildGetQuestHanlder(config.GetQuestByIDAndGameIDFunc))
-	quests.Delete("/:questId", buildBuildDeleteQuestHanlder(config.SoftDeleteQuestFunc))
+	quests.Post("/", buildCreateQuestHanlder(config.CreateQuestFunc))
+	quests.Get("/:questId", buildGetQuestHanlder(config.GetQuestByIDAndGameIDFunc))
+	quests.Delete("/:questId", buildDeleteQuestHanlder(config.SoftDeleteQuestFunc))
+
+	// Statistic
+	statistics := api.Group("/statistics")
+	statistics.Post("/", buildCreateStatisticHandler(config.CreateStatisticFunc))
+	statistics.Get("/:statisticId", buildGetStatisticHanlder(config.GetStatisticByIDAndGameIDFunc))
+	statistics.Delete("/:statisticId", buildDeleteStatisticHanlder(config.SoftDeleteStatisticByIDAndGameID))
 
 	return app
 }

@@ -83,7 +83,7 @@ var (
 // @param NewQuestData body CreateQuestReq true "New quest config data"
 // @success 201 {object} Quest
 // @failure 400,422,500 {object} ErrorResponse
-func buildBuildCreateQuestHanlder(createQuestFunc quest.CreateQuestFunc) fiber.Handler {
+func buildCreateQuestHanlder(createQuestFunc quest.CreateQuestFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		gameID := string(c.Request().Header.Peek(gameIDHeader))
 		if gameID == "" {
@@ -112,7 +112,7 @@ func buildBuildCreateQuestHanlder(createQuestFunc quest.CreateQuestFunc) fiber.H
 // @param questId path string true "Quest ID"
 // @success 200 {object} Quest
 // @failure 404,422,500 {object} ErrorResponse
-func buildBuildGetQuestHanlder(getQuestByIDAndGameID quest.GetQuestByIDAndGameIDFunc) fiber.Handler {
+func buildGetQuestHanlder(getQuestByIDAndGameID quest.GetQuestByIDAndGameIDFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			questID = c.Params("questId")
@@ -139,7 +139,7 @@ func buildBuildGetQuestHanlder(getQuestByIDAndGameID quest.GetQuestByIDAndGameID
 // @param questId path string true "Quest ID"
 // @success 204
 // @failure 404,422,500 {object} ErrorResponse
-func buildBuildDeleteQuestHanlder(softDeleteQuestFunc quest.SoftDeleteQuestFunc) fiber.Handler {
+func buildDeleteQuestHanlder(softDeleteQuestFunc quest.SoftDeleteQuestFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			questID = c.Params("questId")
