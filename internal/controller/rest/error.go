@@ -9,7 +9,6 @@ import (
 	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 	"github.com/gabarcia/metagaming-api/internal/quest"
-	"github.com/gabarcia/metagaming-api/internal/ranking"
 	"github.com/gabarcia/metagaming-api/internal/statistic"
 
 	"github.com/gofiber/fiber/v2"
@@ -52,14 +51,13 @@ func buildErrorHandler() fiber.ErrorHandler {
 		case errors.Is(err, quest.ErrQuestValidationError):
 			validationErrorMessages := strings.Split(err.Error(), "\n")
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalid.withDetails(validationErrorMessages...))
-		// Ranking
-		case errors.Is(err, ranking.ErrLeaderboardClosed):
+			// Leaderboard
+		case errors.Is(err, leaderboard.ErrLeaderboardClosed):
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardClosed)
-		case errors.Is(err, ranking.ErrInvalidPageNumber):
+		case errors.Is(err, leaderboard.ErrInvalidPageNumber):
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseRankingPageNumber)
-		case errors.Is(err, ranking.ErrInvalidLimitNumber):
+		case errors.Is(err, leaderboard.ErrInvalidLimitNumber):
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseRankingLimitNumber)
-		// Leaderboard
 		case errors.Is(err, leaderboard.ErrInvalidLeaderboardID):
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalidID)
 		case errors.Is(err, leaderboard.ErrLeaderboardNotFound):

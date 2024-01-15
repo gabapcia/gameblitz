@@ -6,7 +6,6 @@ import (
 
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 	"github.com/gabarcia/metagaming-api/internal/quest"
-	"github.com/gabarcia/metagaming-api/internal/ranking"
 	"github.com/gabarcia/metagaming-api/internal/statistic"
 
 	"github.com/gofiber/fiber/v2"
@@ -31,8 +30,8 @@ type Config struct {
 	GetLeaderboardByIDAndGameIDFunc    leaderboard.GetByIDAndGameIDFunc
 	DeleteLeaderboardByIDAndGameIDFunc leaderboard.SoftDeleteFunc
 
-	UpsertPlayerRankFunc ranking.UpsertPlayerRankFunc
-	RankingFunc          ranking.RankingFunc
+	UpsertPlayerRankFunc leaderboard.UpsertPlayerRankFunc
+	RankingFunc          leaderboard.RankingFunc
 
 	CreateQuestFunc           quest.CreateQuestFunc
 	GetQuestByIDAndGameIDFunc quest.GetQuestByIDAndGameIDFunc

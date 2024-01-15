@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
-	"github.com/gabarcia/metagaming-api/internal/ranking"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -19,7 +18,7 @@ type Rank struct {
 	Value    float64 `json:"value"`    // Player rank value
 }
 
-func rankFromDomain(r ranking.Rank) Rank {
+func rankFromDomain(r leaderboard.Rank) Rank {
 	return Rank{
 		PlayerID: r.PlayerID,
 		Position: r.Position,
@@ -44,7 +43,7 @@ var (
 // @param UpsertPlayerRankData body UpsertPlayerRankReq true "Values to update the player rank"
 // @success 204
 // @failure 400,404,422,500 {object} ErrorResponse
-func buildUpsertPlayerRankHandler(upsertPlayerRankFunc ranking.UpsertPlayerRankFunc) fiber.Handler {
+func buildUpsertPlayerRankHandler(upsertPlayerRankFunc leaderboard.UpsertPlayerRankFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			leaderboard = c.Locals("leaderboard").(leaderboard.Leaderboard)
@@ -74,7 +73,7 @@ func buildUpsertPlayerRankHandler(upsertPlayerRankFunc ranking.UpsertPlayerRankF
 // @param limit query int false "Number of rankings per page" minimun(1) maximum(500) default(10)
 // @success 200 {array} Rank
 // @failure 400,404,422,500 {object} ErrorResponse
-func buildGetRankingHandler(rankingFunc ranking.RankingFunc) fiber.Handler {
+func buildGetRankingHandler(rankingFunc leaderboard.RankingFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			leaderboard = c.Locals("leaderboard").(leaderboard.Leaderboard)

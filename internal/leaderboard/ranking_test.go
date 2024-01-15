@@ -1,4 +1,4 @@
-package ranking
+package leaderboard
 
 import (
 	"context"
@@ -6,8 +6,6 @@ import (
 	"math/rand"
 	"testing"
 	"time"
-
-	"github.com/gabarcia/metagaming-api/internal/leaderboard"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -22,88 +20,40 @@ func TestBuildUpsertPlayerRankFunc(t *testing.T) {
 		playerID      = uuid.NewString()
 	)
 
-	t.Run("Increment By Value", func(t *testing.T) {
-		lb := leaderboard.Leaderboard{
+	t.Run("OK", func(t *testing.T) {
+		lb := Leaderboard{
 			ID:              leaderboardID,
 			GameID:          gameID,
-			AggregationMode: leaderboard.AggregationModeInc,
+			AggregationMode: AggregationModeInc,
 		}
 
-		upsertPlayerRankFunc := BuildUpsertPlayerRankFunc(
-			func(ctx context.Context, leaderboardID, playerID string, value float64) error {
-				return nil
-			},
-			nil,
-			nil,
-		)
-
-		err := upsertPlayerRankFunc(ctx, lb, playerID, rand.Float64())
-		assert.NoError(t, err)
-	})
-
-	t.Run("Set Max Value", func(t *testing.T) {
-		lb := leaderboard.Leaderboard{
-			ID:              leaderboardID,
-			GameID:          gameID,
-			AggregationMode: leaderboard.AggregationModeMax,
-		}
-
-		upsertPlayerRankFunc := BuildUpsertPlayerRankFunc(
-			nil,
-			func(ctx context.Context, leaderboardID, playerID string, value float64) error {
-				return nil
-			},
-			nil,
-		)
-
-		err := upsertPlayerRankFunc(ctx, lb, playerID, rand.Float64())
-		assert.NoError(t, err)
-	})
-
-	t.Run("Set Min Value", func(t *testing.T) {
-		lb := leaderboard.Leaderboard{
-			ID:              leaderboardID,
-			GameID:          gameID,
-			AggregationMode: leaderboard.AggregationModeMin,
-		}
-
-		upsertPlayerRankFunc := BuildUpsertPlayerRankFunc(
-			nil,
-			nil,
-			func(ctx context.Context, leaderboardID, playerID string, value float64) error {
-				return nil
-			},
-		)
+		upsertPlayerRankFunc := BuildUpsertPlayerRankFunc(func(ctx context.Context, leaderboard Leaderboard, playerID string, value float64) error {
+			return nil
+		})
 
 		err := upsertPlayerRankFunc(ctx, lb, playerID, rand.Float64())
 		assert.NoError(t, err)
 	})
 
 	t.Run("Invalid Aggregation Mode", func(t *testing.T) {
-		lb := leaderboard.Leaderboard{
+		lb := Leaderboard{
 			ID:              leaderboardID,
 			GameID:          gameID,
 			AggregationMode: "INVALID",
 		}
 
-		upsertPlayerRankFunc := BuildUpsertPlayerRankFunc(
-			nil,
-			nil,
-			nil,
-		)
+		upsertPlayerRankFunc := BuildUpsertPlayerRankFunc(func(ctx context.Context, leaderboard Leaderboard, playerID string, value float64) error {
+			return ErrInvalidAggregationMode
+		})
 
 		err := upsertPlayerRankFunc(ctx, lb, playerID, rand.Float64())
 		assert.ErrorIs(t, err, ErrInvalidAggregationMode)
 	})
 
 	t.Run("Leaderboard Closed", func(t *testing.T) {
-		lb := leaderboard.Leaderboard{EndAt: time.Now().Add(-24 * time.Hour)}
+		lb := Leaderboard{EndAt: time.Now().Add(-24 * time.Hour)}
 
-		upsertPlayerRankFunc := BuildUpsertPlayerRankFunc(
-			nil,
-			nil,
-			nil,
-		)
+		upsertPlayerRankFunc := BuildUpsertPlayerRankFunc(nil)
 
 		err := upsertPlayerRankFunc(ctx, lb, playerID, rand.Float64())
 		assert.ErrorIs(t, err, ErrLeaderboardClosed)
@@ -114,9 +64,9 @@ func TestBuildRankingFunc(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("OK", func(t *testing.T) {
-		lb := leaderboard.Leaderboard{
+		lb := Leaderboard{
 			ID:       uuid.NewString(),
-			Ordering: leaderboard.OrderingAsc,
+			Ordering: OrderingAsc,
 		}
 
 		rankingFunc := BuildRankingFunc(func(ctx context.Context, leaderboardID, ordering string, page, limit int64) ([]Rank, error) {
@@ -128,9 +78,9 @@ func TestBuildRankingFunc(t *testing.T) {
 	})
 
 	t.Run("Page Number Lower Than Minimun", func(t *testing.T) {
-		lb := leaderboard.Leaderboard{
+		lb := Leaderboard{
 			ID:       uuid.NewString(),
-			Ordering: leaderboard.OrderingAsc,
+			Ordering: OrderingAsc,
 		}
 
 		rankingFunc := BuildRankingFunc(nil)
@@ -140,9 +90,9 @@ func TestBuildRankingFunc(t *testing.T) {
 	})
 
 	t.Run("Limit Number Lower Than Minimun", func(t *testing.T) {
-		lb := leaderboard.Leaderboard{
+		lb := Leaderboard{
 			ID:       uuid.NewString(),
-			Ordering: leaderboard.OrderingAsc,
+			Ordering: OrderingAsc,
 		}
 
 		rankingFunc := BuildRankingFunc(nil)
@@ -152,9 +102,9 @@ func TestBuildRankingFunc(t *testing.T) {
 	})
 
 	t.Run("Limit Number Greater Than Maximum", func(t *testing.T) {
-		lb := leaderboard.Leaderboard{
+		lb := Leaderboard{
 			ID:       uuid.NewString(),
-			Ordering: leaderboard.OrderingAsc,
+			Ordering: OrderingAsc,
 		}
 
 		rankingFunc := BuildRankingFunc(nil)
@@ -164,7 +114,7 @@ func TestBuildRankingFunc(t *testing.T) {
 	})
 
 	t.Run("Invalid Ordering Value", func(t *testing.T) {
-		lb := leaderboard.Leaderboard{
+		lb := Leaderboard{
 			ID:       uuid.NewString(),
 			Ordering: "INVALID",
 		}
@@ -178,9 +128,9 @@ func TestBuildRankingFunc(t *testing.T) {
 	})
 
 	t.Run("Random Error", func(t *testing.T) {
-		lb := leaderboard.Leaderboard{
+		lb := Leaderboard{
 			ID:       uuid.NewString(),
-			Ordering: leaderboard.OrderingAsc,
+			Ordering: OrderingAsc,
 		}
 
 		rankingFunc := BuildRankingFunc(func(ctx context.Context, leaderboardID, ordering string, page, limit int64) ([]Rank, error) {

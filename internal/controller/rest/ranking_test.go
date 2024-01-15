@@ -13,7 +13,6 @@ import (
 
 	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
 	"github.com/gabarcia/metagaming-api/internal/leaderboard"
-	"github.com/gabarcia/metagaming-api/internal/ranking"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -122,8 +121,8 @@ func TestBuildUpsertPlayerRankHandler(t *testing.T) {
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			},
-			UpsertPlayerRankFunc: func(ctx context.Context, leaderboard leaderboard.Leaderboard, playerID string, value float64) error {
-				return ranking.ErrLeaderboardClosed
+			UpsertPlayerRankFunc: func(ctx context.Context, lb leaderboard.Leaderboard, playerID string, value float64) error {
+				return leaderboard.ErrLeaderboardClosed
 			},
 		})
 
@@ -186,10 +185,10 @@ func TestBuildGetRankingHandler(t *testing.T) {
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			},
-			RankingFunc: func(ctx context.Context, leaderboard leaderboard.Leaderboard, page, limit int64) ([]ranking.Rank, error) {
-				rankings := make([]ranking.Rank, 0)
+			RankingFunc: func(ctx context.Context, lb leaderboard.Leaderboard, page, limit int64) ([]leaderboard.Rank, error) {
+				rankings := make([]leaderboard.Rank, 0)
 				for i := 0; i < 10; i++ {
-					rankings = append(rankings, ranking.Rank{
+					rankings = append(rankings, leaderboard.Rank{
 						LeaderboardID: uuid.NewString(),
 						PlayerID:      uuid.NewString(),
 						Position:      int64(i),
@@ -263,8 +262,8 @@ func TestBuildGetRankingHandler(t *testing.T) {
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			},
-			RankingFunc: func(ctx context.Context, leaderboard leaderboard.Leaderboard, page, limit int64) ([]ranking.Rank, error) {
-				return nil, ranking.ErrInvalidPageNumber
+			RankingFunc: func(ctx context.Context, lb leaderboard.Leaderboard, page, limit int64) ([]leaderboard.Rank, error) {
+				return nil, leaderboard.ErrInvalidPageNumber
 			},
 		})
 
@@ -293,8 +292,8 @@ func TestBuildGetRankingHandler(t *testing.T) {
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			},
-			RankingFunc: func(ctx context.Context, leaderboard leaderboard.Leaderboard, page, limit int64) ([]ranking.Rank, error) {
-				return nil, ranking.ErrInvalidLimitNumber
+			RankingFunc: func(ctx context.Context, lb leaderboard.Leaderboard, page, limit int64) ([]leaderboard.Rank, error) {
+				return nil, leaderboard.ErrInvalidLimitNumber
 			},
 		})
 
@@ -326,7 +325,7 @@ func TestBuildGetRankingHandler(t *testing.T) {
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			},
-			RankingFunc: func(ctx context.Context, leaderboard leaderboard.Leaderboard, page, limit int64) ([]ranking.Rank, error) {
+			RankingFunc: func(ctx context.Context, leaderboard leaderboard.Leaderboard, page, limit int64) ([]leaderboard.Rank, error) {
 				return nil, errors.New("any error")
 			},
 		})
