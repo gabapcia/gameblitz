@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBuildUpdatePlayerProgressionFunc(t *testing.T) {
+func TestBuildUpsertPlayerProgressionFunc(t *testing.T) {
 	var (
 		ctx = context.Background()
 
@@ -17,7 +17,7 @@ func TestBuildUpdatePlayerProgressionFunc(t *testing.T) {
 	)
 
 	t.Run("OK Without Goals Or Landmarks And With Aggregation Mode SUM", func(t *testing.T) {
-		updatePlayerProgressionFunc := BuildUpdatePlayerProgressionFunc(
+		updatePlayerProgressionFunc := BuildUpsertPlayerProgressionFunc(
 			nil,
 			func(ctx context.Context, statistic Statistic, playerID string, value float64) (PlayerProgression, PlayerProgressionUpdates, error) {
 				return PlayerProgression{}, PlayerProgressionUpdates{}, nil
@@ -33,7 +33,7 @@ func TestBuildUpdatePlayerProgressionFunc(t *testing.T) {
 	})
 
 	t.Run("OK Without Goals Or Landmarks And With Aggregation Mode SUB", func(t *testing.T) {
-		updatePlayerProgressionFunc := BuildUpdatePlayerProgressionFunc(
+		updatePlayerProgressionFunc := BuildUpsertPlayerProgressionFunc(
 			nil,
 			func(ctx context.Context, statistic Statistic, playerID string, value float64) (PlayerProgression, PlayerProgressionUpdates, error) {
 				return PlayerProgression{}, PlayerProgressionUpdates{}, nil
@@ -49,7 +49,7 @@ func TestBuildUpdatePlayerProgressionFunc(t *testing.T) {
 	})
 
 	t.Run("OK Without Goals Or Landmarks And With Aggregation Mode MAX", func(t *testing.T) {
-		updatePlayerProgressionFunc := BuildUpdatePlayerProgressionFunc(
+		updatePlayerProgressionFunc := BuildUpsertPlayerProgressionFunc(
 			nil,
 			func(ctx context.Context, statistic Statistic, playerID string, value float64) (PlayerProgression, PlayerProgressionUpdates, error) {
 				return PlayerProgression{}, PlayerProgressionUpdates{}, nil
@@ -65,7 +65,7 @@ func TestBuildUpdatePlayerProgressionFunc(t *testing.T) {
 	})
 
 	t.Run("OK Without Goals Or Landmarks And With Aggregation Mode MIN", func(t *testing.T) {
-		updatePlayerProgressionFunc := BuildUpdatePlayerProgressionFunc(
+		updatePlayerProgressionFunc := BuildUpsertPlayerProgressionFunc(
 			nil,
 			func(ctx context.Context, statistic Statistic, playerID string, value float64) (PlayerProgression, PlayerProgressionUpdates, error) {
 				return PlayerProgression{}, PlayerProgressionUpdates{}, nil
@@ -81,7 +81,7 @@ func TestBuildUpdatePlayerProgressionFunc(t *testing.T) {
 	})
 
 	t.Run("OK With Goals Or Landmarks", func(t *testing.T) {
-		updatePlayerProgressionFunc := BuildUpdatePlayerProgressionFunc(
+		updatePlayerProgressionFunc := BuildUpsertPlayerProgressionFunc(
 			func(ctx context.Context, statistic Statistic, progression PlayerProgression, updates PlayerProgressionUpdates) error {
 				return nil
 			},
@@ -100,7 +100,7 @@ func TestBuildUpdatePlayerProgressionFunc(t *testing.T) {
 
 	t.Run("Invalid Aggregation Mode", func(t *testing.T) {
 		var (
-			updatePlayerProgressionFunc = BuildUpdatePlayerProgressionFunc(
+			updatePlayerProgressionFunc = BuildUpsertPlayerProgressionFunc(
 				nil,
 				func(ctx context.Context, statistic Statistic, playerID string, value float64) (PlayerProgression, PlayerProgressionUpdates, error) {
 					return PlayerProgression{}, PlayerProgressionUpdates{}, ErrInvalidAggregationMode

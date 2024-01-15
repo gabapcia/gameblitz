@@ -34,7 +34,7 @@ type Config struct {
 	MemcachedConnStr         string `envconfig:"MEMCACHED_CONN_STR" required:"true"`
 	MemcachedCacheExpiration int    `envconfig:"MEMCACHED_EXPIRATION" required:"true"`
 
-	RabbitConnStr string `envconfig:"RABBITMQ_CONN_STR" required:"true"`
+	RabbitURI string `envconfig:"RABBITMQ_URI" required:"true"`
 }
 
 func main() {
@@ -55,7 +55,7 @@ func main() {
 	memcached := memcached.New(config.MemcachedConnStr)
 	defer memcached.Close()
 
-	rabbitmq, err := rabbitmq.NewProducer(ctx, config.RabbitConnStr)
+	rabbitmq, err := rabbitmq.NewProducer(ctx, config.RabbitURI)
 	if err != nil {
 		zap.Panic(err, "rabbitmq startup failed")
 	}
@@ -90,11 +90,11 @@ func main() {
 		GetQuestByIDAndGameIDFunc: quest.BuildGetQuestByIDAndGameIDFunc(postgres.GetQuestByIDAndGameID),
 		SoftDeleteQuestFunc:       quest.BuildSoftDeleteQuestFunc(postgres.SoftDeleteQuestByIDAndGameID),
 
-		CreateStatisticFunc:              statistic.BuildCreateStatisticFunc(mongo.CreateStatistic),
-		GetStatisticByIDAndGameIDFunc:    statistic.BuildGetStatisticByIDAndGameID(mongo.GetStatisticByIDAndGameID),
-		SoftDeleteStatisticByIDAndGameID: statistic.BuildSoftDeleteStatistic(mongo.SoftDeleteStatistic),
+		CreateStatisticFunc:                  statistic.BuildCreateStatisticFunc(mongo.CreateStatistic),
+		GetStatisticByIDAndGameIDFunc:        statistic.BuildGetStatisticByIDAndGameID(mongo.GetStatisticByIDAndGameID),
+		SoftDeleteStatisticByIDAndGameIDFunc: statistic.BuildSoftDeleteStatistic(mongo.SoftDeleteStatistic),
 
-		UpdatePlayerStatisticProgressionFunc: statistic.BuildUpdatePlayerProgressionFunc(rabbitmq.PlayerProgressionUpdates, mongo.UpdatePlayerStatisticProgression),
+		UpsertPlayerStatisticProgressionFunc: statistic.BuildUpsertPlayerProgressionFunc(rabbitmq.PlayerProgressionUpdates, mongo.UpdatePlayerStatisticProgression),
 	}
 	if err := rest.Execute(restConfig); err != nil {
 		zap.Panic(err, "api execution failed")

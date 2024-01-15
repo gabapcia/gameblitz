@@ -21,14 +21,14 @@ type (
 
 	PlayerStatisticUpdatesMessage struct {
 		GoalJustCompleted      bool                                     `json:"goalJustCompleted"`
-		GoalCompletedAt        time.Time                                `json:"goalCompletedAt"`
+		GoalCompletedAt        *time.Time                               `json:"goalCompletedAt"`
 		LandmarksJustCompleted []PlayerStatisticLandmarksUpdatesMessage `json:"landmarksJustCompleted"`
 	}
 
 	PlayerStatisticLandmarkMessage struct {
-		Value       float64   `json:"value"`
-		Completed   bool      `json:"completed"`
-		CompletedAt time.Time `json:"completedAt"`
+		Value       float64    `json:"value"`
+		Completed   bool       `json:"completed"`
+		CompletedAt *time.Time `json:"completedAt"`
 	}
 
 	PlayerStatisticMessage struct {
@@ -39,7 +39,7 @@ type (
 		CurrentValue             *float64                         `json:"currentValue"`
 		GoalValue                *float64                         `json:"goalValue"`
 		GoalCompleted            *bool                            `json:"goalCompleted"`
-		GoalCompletedAt          time.Time                        `json:"goalCompletedAt"`
+		GoalCompletedAt          *time.Time                       `json:"goalCompletedAt"`
 		Landmarks                []PlayerStatisticLandmarkMessage `json:"landmarks"`
 		LastUpdate               PlayerStatisticUpdatesMessage    `json:"lastUpdate"`
 	}
@@ -48,10 +48,16 @@ type (
 func messageFromPlayerStatisticUpdates(progression statistic.PlayerProgression, updates statistic.PlayerProgressionUpdates) PlayerStatisticMessage {
 	landmarks := make([]PlayerStatisticLandmarkMessage, len(progression.Landmarks))
 	for i, landmark := range progression.Landmarks {
+		var landmarkCompletedAt *time.Time
+		if !landmark.CompletedAt.IsZero() {
+			tmp := landmark.CompletedAt
+			landmarkCompletedAt = &tmp
+		}
+
 		landmarks[i] = PlayerStatisticLandmarkMessage{
 			Value:       landmark.Value,
 			Completed:   landmark.Completed,
-			CompletedAt: landmark.CompletedAt,
+			CompletedAt: landmarkCompletedAt,
 		}
 	}
 
@@ -63,6 +69,16 @@ func messageFromPlayerStatisticUpdates(progression statistic.PlayerProgression, 
 		}
 	}
 
+	var progressionGoalCompletedAt *time.Time
+	if !progression.GoalCompletedAt.IsZero() {
+		progressionGoalCompletedAt = &progression.GoalCompletedAt
+	}
+
+	var updatesGoalCompletedAt *time.Time
+	if !updates.GoalCompletedAt.IsZero() {
+		updatesGoalCompletedAt = &updates.GoalCompletedAt
+	}
+
 	return PlayerStatisticMessage{
 		StartedAt:                progression.StartedAt,
 		PlayerID:                 progression.PlayerID,
@@ -71,11 +87,11 @@ func messageFromPlayerStatisticUpdates(progression statistic.PlayerProgression, 
 		CurrentValue:             progression.CurrentValue,
 		GoalValue:                progression.GoalValue,
 		GoalCompleted:            progression.GoalCompleted,
-		GoalCompletedAt:          progression.GoalCompletedAt,
+		GoalCompletedAt:          progressionGoalCompletedAt,
 		Landmarks:                landmarks,
 		LastUpdate: PlayerStatisticUpdatesMessage{
 			GoalJustCompleted:      updates.GoalJustCompleted,
-			GoalCompletedAt:        updates.GoalCompletedAt,
+			GoalCompletedAt:        updatesGoalCompletedAt,
 			LandmarksJustCompleted: landmarksUpdates,
 		},
 	}
@@ -101,7 +117,12 @@ func (p producer) PlayerProgressionUpdates(ctx context.Context, st statistic.Sta
 		return err
 	}
 
-	return p.ch.PublishWithContext(ctx, statisticExchange, routingKey, mandatory, immediate, amqp.Publishing{
+	ch, err := p.getChannel()
+	if err != nil {
+		return err
+	}
+
+	return ch.PublishWithContext(ctx, statisticExchange, routingKey, mandatory, immediate, amqp.Publishing{
 		ContentType: "application/json",
 		Body:        body,
 	})

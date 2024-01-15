@@ -67,10 +67,10 @@ func leaderboardFromDomain(l leaderboard.Leaderboard) Leaderboard {
 }
 
 var (
-	ErrorResponseLeaderboardInvalid       = ErrorResponse{Code: "1.0", Message: "Invalid Leaderboard"}
+	ErrorResponseLeaderboardInvalid       = ErrorResponse{Code: "1.0", Message: "Invalid leaderboard"}
 	ErrorResponseLeaderboardNotFound      = ErrorResponse{Code: "1.1", Message: "Leaderboard not found"}
-	ErrorResponseLeaderboardInvalidID     = ErrorResponse{Code: "1.2", Message: "Invalid Leaderboard ID"}
-	ErrorResponseLeaderboardInvalidGameID = ErrorResponse{Code: "1.3", Message: "Invalid Leaderboard Game ID"}
+	ErrorResponseLeaderboardInvalidID     = ErrorResponse{Code: "1.2", Message: "Invalid leaderboard ID"}
+	ErrorResponseLeaderboardInvalidGameID = ErrorResponse{Code: "1.3", Message: "Invalid leaderboard game ID"}
 )
 
 func buildGetLeaderboardMiddleware(cache fiber.Storage, expiration time.Duration, getLeaderboardByIDAndGameIDFunc leaderboard.GetByIDAndGameIDFunc) fiber.Handler {
@@ -89,7 +89,7 @@ func buildGetLeaderboardMiddleware(cache fiber.Storage, expiration time.Duration
 			data, err := cache.Get(cacheKey)
 			if err != nil {
 				zap.Error(err, "get cache error")
-			} else {
+			} else if data != nil {
 				var leaderboard leaderboard.Leaderboard
 				if err = json.Unmarshal(data, &leaderboard); err != nil {
 					zap.Error(err, "unmarshal cached leaderboard error")

@@ -33,6 +33,24 @@ func (p producer) ensureExchanges(ctx context.Context) error {
 	return nil
 }
 
+func (p producer) getChannel() (*amqp.Channel, error) {
+	if p.ch != nil {
+		if !p.ch.IsClosed() {
+			return p.ch, nil
+		}
+
+		_ = p.ch.Close()
+	}
+
+	ch, err := p.conn.Channel()
+	if err != nil {
+		return nil, fmt.Errorf("Get Channel: %w", err)
+	}
+
+	p.ch = ch
+	return p.ch, nil
+}
+
 func (p producer) Close() {
 	defer p.conn.Close()
 	defer p.ch.Close()

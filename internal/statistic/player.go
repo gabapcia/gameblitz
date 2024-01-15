@@ -43,10 +43,10 @@ type (
 	}
 )
 
-func BuildUpdatePlayerProgressionFunc(
+func BuildUpsertPlayerProgressionFunc(
 	notifierPlayerProgressionUpdates NotifierPlayerProgressionUpdates,
 	storageUpdatePlayerProgressionFunc StorageUpdatePlayerProgressionFunc,
-) UpdatePlayerProgressionFunc {
+) UpsertPlayerProgressionFunc {
 	return func(ctx context.Context, statistic Statistic, playerID string, value float64) error {
 		playerProgression, playerProgressionUpdates, err := storageUpdatePlayerProgressionFunc(ctx, statistic, playerID, value)
 		if err != nil {

@@ -9,13 +9,101 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
 	"github.com/gabarcia/metagaming-api/internal/statistic"
+	"github.com/gofiber/fiber/v2"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestBuildGetStatisticMiddleware(t *testing.T) {
+	var (
+		leaderboardID = uuid.NewString()
+		gameID        = uuid.NewString()
+	)
+
+	t.Run("OK", func(t *testing.T) {
+		getStatisticMiddleware := buildGetStatisticMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
+			return statistic.Statistic{ID: id, GameID: gameID}, nil
+		})
+
+		app := fiber.New()
+		app.Get("/:statisticId", getStatisticMiddleware, func(c *fiber.Ctx) error {
+			statistic := c.Locals("statistic")
+			return c.Status(http.StatusOK).JSON(statistic)
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", leaderboardID), nil)
+
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var body Leaderboard
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, leaderboardID, body.ID)
+		assert.Equal(t, gameID, body.GameID)
+	})
+
+	t.Run("Missing Game ID", func(t *testing.T) {
+		getStatisticMiddleware := buildGetStatisticMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
+			return statistic.Statistic{ID: id, GameID: gameID}, nil
+		})
+
+		app := fiber.New()
+		app.Get("/:statisticId", getStatisticMiddleware, func(c *fiber.Ctx) error {
+			statistic := c.Locals("statistic")
+			return c.Status(http.StatusOK).JSON(statistic)
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", leaderboardID), nil)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+
+		var body ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Code, body.Code)
+		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Message, body.Message)
+	})
+
+	t.Run("Leaderboard Not Found", func(t *testing.T) {
+		getStatisticMiddleware := buildGetStatisticMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
+			return statistic.Statistic{}, statistic.ErrStatisticNotFound
+		})
+
+		app := fiber.New(fiber.Config{ErrorHandler: buildErrorHandler()})
+		app.Get("/:statisticId", getStatisticMiddleware, func(c *fiber.Ctx) error {
+			statistic := c.Locals("statistic")
+			return c.Status(http.StatusOK).JSON(statistic)
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", leaderboardID), nil)
+
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+		var body ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseStatisticNotFound.Code, body.Code)
+		assert.Equal(t, ErrorResponseStatisticNotFound.Message, body.Message)
+	})
+}
 
 func TestBuildCreateStatisticHanlder(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
@@ -287,7 +375,7 @@ func TestBuildDeleteStatisticHanlder(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
-			SoftDeleteStatisticByIDAndGameID: func(ctx context.Context, id, gameID string) error {
+			SoftDeleteStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) error {
 				return nil
 			},
 		})
@@ -304,7 +392,7 @@ func TestBuildDeleteStatisticHanlder(t *testing.T) {
 
 	t.Run("Invalid Statistic ID", func(t *testing.T) {
 		app := App(Config{
-			SoftDeleteStatisticByIDAndGameID: func(ctx context.Context, id, gameID string) error {
+			SoftDeleteStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) error {
 				return statistic.ErrInvalidStatisticID
 			},
 		})
@@ -347,7 +435,7 @@ func TestBuildDeleteStatisticHanlder(t *testing.T) {
 
 	t.Run("Not Found", func(t *testing.T) {
 		app := App(Config{
-			SoftDeleteStatisticByIDAndGameID: func(ctx context.Context, id, gameID string) error {
+			SoftDeleteStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) error {
 				return statistic.ErrStatisticNotFound
 			},
 		})
@@ -374,7 +462,7 @@ func TestBuildDeleteStatisticHanlder(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
-			SoftDeleteStatisticByIDAndGameID: func(ctx context.Context, id, gameID string) error {
+			SoftDeleteStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) error {
 				return errors.New("any error")
 			},
 		})

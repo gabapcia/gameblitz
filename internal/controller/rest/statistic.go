@@ -1,9 +1,12 @@
 package rest
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
 	"github.com/gabarcia/metagaming-api/internal/statistic"
 
 	"github.com/gofiber/fiber/v2"
@@ -65,6 +68,54 @@ var (
 	ErrorResponseStatisticInvalidID     = ErrorResponse{Code: "4.3", Message: "Invalid statistic id"}
 )
 
+func buildGetStatisticMiddleware(cache fiber.Storage, expiration time.Duration, getStatisticByIDAndGameIDFunc statistic.GetByIDAndGameIDFunc) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var (
+			id       = c.Params("statisticId")
+			gameID   = string(c.Request().Header.Peek(gameIDHeader))
+			cacheKey = fmt.Sprintf("GetStatisticMiddleware:%s:%s", id, gameID)
+		)
+
+		if gameID == "" {
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseStatisticInvalidGameID)
+		}
+
+		if cache != nil {
+			data, err := cache.Get(cacheKey)
+			if err != nil {
+				zap.Error(err, "get cache error")
+			} else if data != nil {
+				var statistic statistic.Statistic
+				if err = json.Unmarshal(data, &statistic); err != nil {
+					zap.Error(err, "unmarshal cached statistic error")
+				} else {
+					c.Locals("statistic", statistic)
+					return c.Next()
+				}
+			}
+		}
+
+		statistic, err := getStatisticByIDAndGameIDFunc(c.Context(), id, gameID)
+		if err != nil {
+			return err
+		}
+
+		if cache != nil {
+			data, err := json.Marshal(statistic)
+			if err != nil {
+				zap.Error(err, "marshal statistic cache error")
+			} else {
+				if err = cache.Set(cacheKey, data, expiration); err != nil {
+					zap.Error(err, "unable to cache statistic")
+				}
+			}
+		}
+
+		c.Locals("statistic", statistic)
+		return c.Next()
+	}
+}
+
 // @summary Create Statistic
 // @description Create a statistic
 // @router /api/v1/statistics [POST]
@@ -103,7 +154,7 @@ func buildCreateStatisticHandler(createStatisticFunc statistic.CreateFunc) fiber
 // @param statisticId path string true "Statistic ID"
 // @success 200 {object} Statistic
 // @failure 404,422,500 {object} ErrorResponse
-func buildGetStatisticHanlder(getStatisticByIDAndGameID statistic.GetByIDAndGameID) fiber.Handler {
+func buildGetStatisticHanlder(getStatisticByIDAndGameID statistic.GetByIDAndGameIDFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			statisticID = c.Params("statisticId")
@@ -130,7 +181,7 @@ func buildGetStatisticHanlder(getStatisticByIDAndGameID statistic.GetByIDAndGame
 // @param statisticId path string true "Statistic ID"
 // @success 204
 // @failure 404,422,500 {object} ErrorResponse
-func buildDeleteStatisticHanlder(softDeleteStatisticFunc statistic.SoftDeleteByIDAndGameID) fiber.Handler {
+func buildDeleteStatisticHanlder(softDeleteStatisticFunc statistic.SoftDeleteByIDAndGameIDFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			questID = c.Params("statisticId")

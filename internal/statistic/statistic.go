@@ -86,13 +86,13 @@ func BuildCreateStatisticFunc(storageCreateStatisticFunc StorageCreateStatisticF
 	}
 }
 
-func BuildGetStatisticByIDAndGameID(storageGetStatisticByIDAndGameID StorageGetStatisticByIDAndGameID) GetByIDAndGameID {
+func BuildGetStatisticByIDAndGameID(storageGetStatisticByIDAndGameID StorageGetStatisticByIDAndGameID) GetByIDAndGameIDFunc {
 	return func(ctx context.Context, id, gameID string) (Statistic, error) {
 		return storageGetStatisticByIDAndGameID(ctx, id, gameID)
 	}
 }
 
-func BuildSoftDeleteStatistic(storageSoftDeleteStatistic StorageSoftDeleteStatistic) SoftDeleteByIDAndGameID {
+func BuildSoftDeleteStatistic(storageSoftDeleteStatistic StorageSoftDeleteStatistic) SoftDeleteByIDAndGameIDFunc {
 	return func(ctx context.Context, id, gameID string) error {
 		return storageSoftDeleteStatistic(ctx, id, gameID)
 	}

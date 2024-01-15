@@ -662,4 +662,53 @@ paths:
           schema:
             $ref: '#/definitions/rest.ErrorResponse'
       summary: Get Statistic By ID
+  /api/v1/statistics/{statisticId}/players/{playerId}:
+    post:
+      consumes:
+      - application/json
+      description: Set or update a player's statistic
+      parameters:
+      - description: Game ID responsible for the statistic
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: Statistic ID
+        in: path
+        name: statisticId
+        required: true
+        type: string
+      - description: Player ID
+        in: path
+        name: playerId
+        required: true
+        type: string
+      - description: Values to update the player rank
+        in: body
+        name: UpsertPlayerRankData
+        required: true
+        schema:
+          $ref: '#/definitions/rest.UpsertPlayerRankReq'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Upsert Player Statistic
 swagger: "2.0"
