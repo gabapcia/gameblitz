@@ -14,4 +14,7 @@ type (
 
 	// Update player statistic progression using the provided value
 	UpsertPlayerProgressionFunc func(ctx context.Context, statistic Statistic, playerID string, value float64) error
+
+	// Get player progression by statistic id and player id
+	GetPlayerProgressionFunc func(ctx context.Context, statisticID, playerID string) (PlayerProgression, error)
 )

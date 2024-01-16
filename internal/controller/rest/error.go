@@ -36,6 +36,8 @@ func buildErrorHandler() fiber.ErrorHandler {
 
 		switch {
 		// Statistic
+		case errors.Is(err, statistic.ErrPlayerStatisticNotFound):
+			return c.Status(http.StatusNotFound).JSON(ErrorResponsePlayerStatisticNotFound)
 		case errors.Is(err, statistic.ErrInvalidStatisticID):
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseStatisticInvalidID)
 		case errors.Is(err, statistic.ErrStatisticNotFound):

@@ -12,34 +12,34 @@ var (
 
 type (
 	PlayerProgressionUpdatesLandmark struct {
-		Value       float64
-		CompletedAt time.Time
+		Value       float64   // Landmark value
+		CompletedAt time.Time // Time the player reached the landmark
 	}
 
 	PlayerProgressionUpdates struct {
-		GoalJustCompleted      bool
-		GoalCompletedAt        time.Time
-		LandmarksJustCompleted []PlayerProgressionUpdatesLandmark
+		GoalJustCompleted      bool                               // Player just reached the goal?
+		GoalCompletedAt        time.Time                          // Time the player reached the goal
+		LandmarksJustCompleted []PlayerProgressionUpdatesLandmark // Landmarks that the player has just reached
 	}
 )
 
 type (
 	PlayerProgressionLandmark struct {
-		Value       float64
-		Completed   bool
-		CompletedAt time.Time
+		Value       float64   // Landmark value
+		Completed   bool      // Has the player reached the landmark?
+		CompletedAt time.Time // Time the player reached the landmark
 	}
 
 	PlayerProgression struct {
-		StartedAt                time.Time
-		PlayerID                 string
-		StatisticID              string
-		StatisticAggregationMode string
-		CurrentValue             *float64
-		GoalValue                *float64
-		GoalCompleted            *bool
-		GoalCompletedAt          time.Time
-		Landmarks                []PlayerProgressionLandmark
+		StartedAt       time.Time                   // Time the player started the progression for the given statistic
+		UpdatedAt       time.Time                   // Last time the player updated it's statistic progress
+		PlayerID        string                      // Player's ID
+		StatisticID     string                      // Statistic ID
+		CurrentValue    *float64                    // Current progression value
+		GoalValue       *float64                    // Statistic's goal
+		GoalCompleted   *bool                       // Has the player reached the goal?
+		GoalCompletedAt time.Time                   // Time the player reached the goal
+		Landmarks       []PlayerProgressionLandmark // Landmarks player progression
 	}
 )
 
@@ -58,5 +58,11 @@ func BuildUpsertPlayerProgressionFunc(
 		}
 
 		return nil
+	}
+}
+
+func BuildGetPlayerProgression(storageGetPlayerProgressionFunc StorageGetPlayerProgressionFunc) GetPlayerProgressionFunc {
+	return func(ctx context.Context, statisticID, playerID string) (PlayerProgression, error) {
+		return storageGetPlayerProgressionFunc(ctx, statisticID, playerID)
 	}
 }

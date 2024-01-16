@@ -145,3 +145,136 @@ func TestTuildUpsertPlayerStatisticHandler(t *testing.T) {
 		assert.Equal(t, ErrorResponseInternalServerError.Message, body.Message)
 	})
 }
+
+func TestBuildGetPlayerStatisticHandler(t *testing.T) {
+	var (
+		statisticID = uuid.NewString()
+		gameID      = uuid.NewString()
+		playerID    = uuid.NewString()
+	)
+
+	t.Run("OK", func(t *testing.T) {
+		app := App(Config{
+			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
+				return statistic.Statistic{ID: id, GameID: gameID}, nil
+			},
+			GetPlayerStatisticProgressionFunc: func(ctx context.Context, statisticID, playerID string) (statistic.PlayerProgression, error) {
+				return statistic.PlayerProgression{PlayerID: playerID, StatisticID: statisticID}, nil
+			},
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), nil)
+
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var data PlayerStatisticProgression
+		err = json.NewDecoder(resp.Body).Decode(&data)
+		assert.NoError(t, err)
+
+		assert.Equal(t, statisticID, data.StatisticID)
+		assert.Equal(t, playerID, data.PlayerID)
+	})
+
+	t.Run("Missing Game ID", func(t *testing.T) {
+		app := App(Config{
+			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
+				return statistic.Statistic{ID: id, GameID: gameID}, nil
+			},
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), nil)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+
+		var body ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Code, body.Code)
+		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Message, body.Message)
+	})
+
+	t.Run("Statistic Not Found", func(t *testing.T) {
+		app := App(Config{
+			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
+				return statistic.Statistic{}, statistic.ErrStatisticNotFound
+			},
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), nil)
+
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+		var body ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseStatisticNotFound.Code, body.Code)
+		assert.Equal(t, ErrorResponseStatisticNotFound.Message, body.Message)
+	})
+
+	t.Run("Player Statistic Progression Not Found", func(t *testing.T) {
+		app := App(Config{
+			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
+				return statistic.Statistic{ID: id, GameID: gameID}, nil
+			},
+			GetPlayerStatisticProgressionFunc: func(ctx context.Context, statisticID, playerID string) (statistic.PlayerProgression, error) {
+				return statistic.PlayerProgression{}, statistic.ErrPlayerStatisticNotFound
+			},
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), nil)
+
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+		var body ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponsePlayerStatisticNotFound.Code, body.Code)
+		assert.Equal(t, ErrorResponsePlayerStatisticNotFound.Message, body.Message)
+	})
+
+	t.Run("Random Error", func(t *testing.T) {
+		zap.Start()
+		defer zap.Sync()
+
+		app := App(Config{
+			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
+				return statistic.Statistic{ID: id, GameID: gameID}, nil
+			},
+			GetPlayerStatisticProgressionFunc: func(ctx context.Context, statisticID, playerID string) (statistic.PlayerProgression, error) {
+				return statistic.PlayerProgression{}, errors.New("any error")
+			},
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), nil)
+
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+
+		var body ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseInternalServerError.Code, body.Code)
+		assert.Equal(t, ErrorResponseInternalServerError.Message, body.Message)
+	})
+}

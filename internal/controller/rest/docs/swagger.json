@@ -610,6 +610,61 @@
             }
         },
         "/api/v1/statistics/{statisticId}/players/{playerId}": {
+            "get": {
+                "description": "Get the player's statistic progression",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Player Statistic Progression",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the statistic",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Statistic ID",
+                        "name": "statisticId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rest.PlayerStatisticProgression"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Set or update a player's statistic",
                 "consumes": [
@@ -876,6 +931,67 @@
                 "updatedAt": {
                     "description": "Last time that the leaderboard info was updated",
                     "type": "string"
+                }
+            }
+        },
+        "rest.PlayerStatisticProgression": {
+            "type": "object",
+            "properties": {
+                "currentValue": {
+                    "description": "Current progression value",
+                    "type": "number"
+                },
+                "goalCompleted": {
+                    "description": "Has the player reached the goal?",
+                    "type": "boolean"
+                },
+                "goalCompletedAt": {
+                    "description": "Time the player reached the goal",
+                    "type": "string"
+                },
+                "goalValue": {
+                    "description": "Statistic's goal",
+                    "type": "number"
+                },
+                "landmarks": {
+                    "description": "Landmarks player progression",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rest.PlayerStatisticProgressionLandmark"
+                    }
+                },
+                "playerId": {
+                    "description": "Player's ID",
+                    "type": "string"
+                },
+                "startedAt": {
+                    "description": "Time the player started the progression for the given statistic",
+                    "type": "string"
+                },
+                "statisticId": {
+                    "description": "Statistic ID",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "Last time the player updated it's statistic progress",
+                    "type": "string"
+                }
+            }
+        },
+        "rest.PlayerStatisticProgressionLandmark": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "description": "Has the player reached the landmark?",
+                    "type": "boolean"
+                },
+                "completedAt": {
+                    "description": "Time the player reached the landmark",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "Landmark value",
+                    "type": "number"
                 }
             }
         },

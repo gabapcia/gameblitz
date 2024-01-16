@@ -31,8 +31,9 @@ type Config struct {
 	RedisPassword string `envconfig:"REDIS_PASSWORD" required:"false"`
 	RedisDB       int    `envconfig:"REDIS_DB" required:"false"`
 
-	MemcachedConnStr         string `envconfig:"MEMCACHED_CONN_STR" required:"true"`
-	MemcachedCacheExpiration int    `envconfig:"MEMCACHED_EXPIRATION" required:"true"`
+	MemcachedConnStr                   string `envconfig:"MEMCACHED_CONN_STR" required:"true"`
+	MemcachedCacheExpiration           int    `envconfig:"MEMCACHED_EXPIRATION" required:"false" default:"60"`
+	MemcachedCacheMiddlewareExpiration int    `envconfig:"MEMCACHED_MIDDLEWARE_EXPIRATION" required:"false" default:"60"`
 
 	RabbitURI string `envconfig:"RABBITMQ_URI" required:"true"`
 }
@@ -95,6 +96,7 @@ func main() {
 		SoftDeleteStatisticByIDAndGameIDFunc: statistic.BuildSoftDeleteStatistic(mongo.SoftDeleteStatistic),
 
 		UpsertPlayerStatisticProgressionFunc: statistic.BuildUpsertPlayerProgressionFunc(rabbitmq.PlayerProgressionUpdates, mongo.UpdatePlayerStatisticProgression),
+		GetPlayerStatisticProgressionFunc:    statistic.BuildGetPlayerProgression(mongo.GetPlayerProgression),
 	}
 	if err := rest.Execute(restConfig); err != nil {
 		zap.Panic(err, "api execution failed")

@@ -32,16 +32,16 @@ type (
 	}
 
 	PlayerStatisticMessage struct {
-		StartedAt                time.Time                        `json:"startedAt"`
-		PlayerID                 string                           `json:"playerId"`
-		StatisticID              string                           `json:"statisticId"`
-		StatisticAggregationMode string                           `json:"statisticAggregationMode"`
-		CurrentValue             *float64                         `json:"currentValue"`
-		GoalValue                *float64                         `json:"goalValue"`
-		GoalCompleted            *bool                            `json:"goalCompleted"`
-		GoalCompletedAt          *time.Time                       `json:"goalCompletedAt"`
-		Landmarks                []PlayerStatisticLandmarkMessage `json:"landmarks"`
-		LastUpdate               PlayerStatisticUpdatesMessage    `json:"lastUpdate"`
+		StartedAt       time.Time                        `json:"startedAt"`
+		UpdatedAt       time.Time                        `json:"updatedAt"`
+		PlayerID        string                           `json:"playerId"`
+		StatisticID     string                           `json:"statisticId"`
+		CurrentValue    *float64                         `json:"currentValue"`
+		GoalValue       *float64                         `json:"goalValue"`
+		GoalCompleted   *bool                            `json:"goalCompleted"`
+		GoalCompletedAt *time.Time                       `json:"goalCompletedAt"`
+		Landmarks       []PlayerStatisticLandmarkMessage `json:"landmarks"`
+		LastUpdate      PlayerStatisticUpdatesMessage    `json:"lastUpdate"`
 	}
 )
 
@@ -80,15 +80,15 @@ func messageFromPlayerStatisticUpdates(progression statistic.PlayerProgression, 
 	}
 
 	return PlayerStatisticMessage{
-		StartedAt:                progression.StartedAt,
-		PlayerID:                 progression.PlayerID,
-		StatisticID:              progression.StatisticID,
-		StatisticAggregationMode: progression.StatisticAggregationMode,
-		CurrentValue:             progression.CurrentValue,
-		GoalValue:                progression.GoalValue,
-		GoalCompleted:            progression.GoalCompleted,
-		GoalCompletedAt:          progressionGoalCompletedAt,
-		Landmarks:                landmarks,
+		StartedAt:       progression.StartedAt,
+		UpdatedAt:       progression.UpdatedAt,
+		PlayerID:        progression.PlayerID,
+		StatisticID:     progression.StatisticID,
+		CurrentValue:    progression.CurrentValue,
+		GoalValue:       progression.GoalValue,
+		GoalCompleted:   progression.GoalCompleted,
+		GoalCompletedAt: progressionGoalCompletedAt,
+		Landmarks:       landmarks,
 		LastUpdate: PlayerStatisticUpdatesMessage{
 			GoalJustCompleted:      updates.GoalJustCompleted,
 			GoalCompletedAt:        updatesGoalCompletedAt,

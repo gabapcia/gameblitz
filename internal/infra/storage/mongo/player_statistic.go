@@ -26,6 +26,7 @@ type PlayerStatisticProgressionLandmark struct {
 
 type PlayerStatisticProgression struct {
 	StartedAt                time.Time                            `bson:"startedAt,omitempty"`
+	UpdatedAt                time.Time                            `bson:"updatedAt,omitempty"`
 	PlayerID                 string                               `bson:"playerId"`
 	StatisticID              string                               `bson:"statisticId"`
 	StatisticAggregationMode string                               `bson:"statisticAggregationMode"`
@@ -112,15 +113,15 @@ func (p PlayerStatisticProgression) toDomain() statistic.PlayerProgression {
 	}
 
 	return statistic.PlayerProgression{
-		StartedAt:                p.StartedAt,
-		PlayerID:                 p.PlayerID,
-		StatisticID:              p.StatisticID,
-		StatisticAggregationMode: p.StatisticAggregationMode,
-		CurrentValue:             p.CurrentValue,
-		GoalValue:                p.GoalValue,
-		GoalCompleted:            p.GoalCompleted,
-		GoalCompletedAt:          p.GoalCompletedAt,
-		Landmarks:                landmarks,
+		StartedAt:       p.StartedAt,
+		UpdatedAt:       p.UpdatedAt,
+		PlayerID:        p.PlayerID,
+		StatisticID:     p.StatisticID,
+		CurrentValue:    p.CurrentValue,
+		GoalValue:       p.GoalValue,
+		GoalCompleted:   p.GoalCompleted,
+		GoalCompletedAt: p.GoalCompletedAt,
+		Landmarks:       landmarks,
 	}
 }
 
@@ -227,6 +228,7 @@ func (c connection) updatePlayerStatisticProgression(ctx context.Context, statis
 	update := bson.A{
 		bson.M{"$set": bson.M{"_previousData": "$$ROOT"}},
 		bson.M{"$set": bson.M{
+			"updatedAt": time.Now().UTC(),
 			"startedAt": bson.M{"$cond": bson.M{
 				"if": bson.M{"$eq": bson.A{
 					bson.M{"$ifNull": bson.A{"$startedAt", "NULL"}},
@@ -326,4 +328,13 @@ func (c connection) UpdatePlayerStatisticProgression(ctx context.Context, st sta
 	}
 
 	return playerProgression.toDomain(), playerProgression.toDomainUpdates(), nil
+}
+
+func (c connection) GetPlayerProgression(ctx context.Context, statisticID, playerID string) (statistic.PlayerProgression, error) {
+	playerProgression, err := c.getPlayerStatisticProgression(ctx, statisticID, playerID)
+	if err != nil {
+		return statistic.PlayerProgression{}, err
+	}
+
+	return playerProgression.toDomain(), nil
 }

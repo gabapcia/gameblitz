@@ -23,8 +23,9 @@ const (
 type Config struct {
 	Port int
 
-	CacheSorage     fiber.Storage
-	CacheExpiration time.Duration
+	CacheSorage               fiber.Storage
+	CacheExpiration           time.Duration
+	CacheMiddlewareExpiration time.Duration
 
 	CreateLeaderboardFunc              leaderboard.CreateFunc
 	GetLeaderboardByIDAndGameIDFunc    leaderboard.GetByIDAndGameIDFunc
@@ -42,6 +43,7 @@ type Config struct {
 	SoftDeleteStatisticByIDAndGameIDFunc statistic.SoftDeleteByIDAndGameIDFunc
 
 	UpsertPlayerStatisticProgressionFunc statistic.UpsertPlayerProgressionFunc
+	GetPlayerStatisticProgressionFunc    statistic.GetPlayerProgressionFunc
 }
 
 // @title Metagaming API
@@ -71,7 +73,7 @@ func App(config Config) *fiber.App {
 	leaderboards.Get("/:leaderboardId", buildGetLeaderboardHandler(config.GetLeaderboardByIDAndGameIDFunc))
 	leaderboards.Delete("/:leaderboardId", buildDeleteLeaderboardHandler(config.DeleteLeaderboardByIDAndGameIDFunc))
 
-	rankings := leaderboards.Group("/:leaderboardId/ranking", buildGetLeaderboardMiddleware(config.CacheSorage, config.CacheExpiration, config.GetLeaderboardByIDAndGameIDFunc))
+	rankings := leaderboards.Group("/:leaderboardId/ranking", buildGetLeaderboardMiddleware(config.CacheSorage, config.CacheMiddlewareExpiration, config.GetLeaderboardByIDAndGameIDFunc))
 	rankings.Get("/", buildGetRankingHandler(config.RankingFunc))
 	rankings.Post("/:playerId", buildUpsertPlayerRankHandler(config.UpsertPlayerRankFunc))
 
@@ -87,7 +89,8 @@ func App(config Config) *fiber.App {
 	statistics.Get("/:statisticId", buildGetStatisticHanlder(config.GetStatisticByIDAndGameIDFunc))
 	statistics.Delete("/:statisticId", buildDeleteStatisticHanlder(config.SoftDeleteStatisticByIDAndGameIDFunc))
 
-	playerStatistics := statistics.Group("/:statisticId/players", buildGetStatisticMiddleware(config.CacheSorage, config.CacheExpiration, config.GetStatisticByIDAndGameIDFunc))
+	playerStatistics := statistics.Group("/:statisticId/players", buildGetStatisticMiddleware(config.CacheSorage, config.CacheMiddlewareExpiration, config.GetStatisticByIDAndGameIDFunc))
+	playerStatistics.Get("/:playerId", buildGetPlayerStatisticHandler(config.GetPlayerStatisticProgressionFunc))
 	playerStatistics.Post("/:playerId", buildUpsertPlayerStatisticHandler(config.UpsertPlayerStatisticProgressionFunc))
 
 	return app
