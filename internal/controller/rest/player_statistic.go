@@ -9,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type UpsertPlayerStatisticReq struct {
+type UpsertPlayerStatisticProgressionReq struct {
 	Value float64 `json:"value"` // Value that will be used to update the player's statistic
 }
 
@@ -81,15 +81,15 @@ var (
 	ErrorResponsePlayerStatisticNotFound = ErrorResponse{Code: "5.0", Message: "Player statistic progression not found"}
 )
 
-// @summary Upsert Player Statistic
-// @description Set or update a player's statistic
+// @summary Upsert Player Statistic Progression
+// @description Set or update a player's statistic progression
 // @router /api/v1/statistics/{statisticId}/players/{playerId} [POST]
 // @accept json
 // @produce json
 // @param X-Game-ID header string true "Game ID responsible for the statistic"
 // @param statisticId path string true "Statistic ID"
 // @param playerId path string true "Player ID"
-// @param UpsertPlayerRankData body UpsertPlayerRankReq true "Values to update the player rank"
+// @param UpsertPlayerStatisticData body UpsertPlayerStatisticProgressionReq true "Values to update the player statistic progression"
 // @success 204
 // @failure 400,404,422,500 {object} ErrorResponse
 func buildUpsertPlayerStatisticHandler(upsertPlayerStatisticFunc statistic.UpsertPlayerProgressionFunc) fiber.Handler {
@@ -99,7 +99,7 @@ func buildUpsertPlayerStatisticHandler(upsertPlayerStatisticFunc statistic.Upser
 			playerID  = c.Params("playerId")
 		)
 
-		var body UpsertPlayerRankReq
+		var body UpsertPlayerStatisticProgressionReq
 		if err := c.BodyParser(&body); err != nil {
 			return err
 		}
@@ -112,7 +112,7 @@ func buildUpsertPlayerStatisticHandler(upsertPlayerStatisticFunc statistic.Upser
 	}
 }
 
-// @summary Player Statistic Progression
+// @summary Get Player Statistic Progression By ID
 // @description Get the player's statistic progression
 // @router /api/v1/statistics/{statisticId}/players/{playerId} [GET]
 // @produce json

@@ -622,7 +622,7 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Player Statistic Progression",
+                "summary": "Get Player Statistic Progression By ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -673,14 +673,14 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Set or update a player's statistic",
+                "description": "Set or update a player's statistic progression",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Upsert Player Statistic",
+                "summary": "Upsert Player Statistic Progression",
                 "parameters": [
                     {
                         "type": "string",
@@ -704,12 +704,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Values to update the player rank",
-                        "name": "UpsertPlayerRankData",
+                        "description": "Values to update the player statistic progression",
+                        "name": "UpsertPlayerStatisticData",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.UpsertPlayerRankReq"
+                            "$ref": "#/definitions/rest.UpsertPlayerStatisticProgressionReq"
                         }
                     }
                 ],
@@ -1147,6 +1147,15 @@ const docTemplate = `{
             "properties": {
                 "value": {
                     "description": "Value that will be used to update the player's rank",
+                    "type": "number"
+                }
+            }
+        },
+        "rest.UpsertPlayerStatisticProgressionReq": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "description": "Value that will be used to update the player's statistic",
                     "type": "number"
                 }
             }
