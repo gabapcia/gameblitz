@@ -109,3 +109,58 @@ func (c connection) GetPlayerQuestProgression(ctx context.Context, q quest.Quest
 
 	return sqlcGetPlayerQuestDataToDomain(playerQuestData, q, playerTasksData), nil
 }
+
+func (c connection) UpdatePlayerQuestProgression(ctx context.Context, q quest.Quest, tc []string, playerID string) (quest.PlayerQuestProgression, error) {
+	questID, err := uuid.Parse(q.ID)
+	if err != nil {
+		return quest.PlayerQuestProgression{}, quest.ErrInvalidQuestID
+	}
+
+	tasksCompleted := make([]uuid.UUID, len(tc))
+	for i, taskIDRaw := range tc {
+		taskID, err := uuid.Parse(taskIDRaw)
+		if err != nil {
+			return quest.PlayerQuestProgression{}, quest.ErrInvalidTaskID
+		}
+
+		tasksCompleted[i] = taskID
+	}
+
+	tx, err := c.pool.Begin(ctx)
+	if err != nil {
+		return quest.PlayerQuestProgression{}, err
+	}
+	defer tx.Rollback(context.Background())
+
+	queries := c.queries.WithTx(tx)
+
+	err = queries.MarkPlayerQuestTasksAsCompleted(ctx, sqlc.MarkPlayerQuestTasksAsCompletedParams{
+		PlayerID:       playerID,
+		TasksCompleted: tasksCompleted,
+	})
+	if err != nil {
+		return quest.PlayerQuestProgression{}, err
+	}
+
+	err = queries.StartPlayerTasksThatHadTheDependenciesCompleted(ctx, sqlc.StartPlayerTasksThatHadTheDependenciesCompletedParams{
+		QuestID:  questID,
+		PlayerID: playerID,
+	})
+	if err != nil {
+		return quest.PlayerQuestProgression{}, err
+	}
+
+	err = queries.MarkPlayerQuestAsCompleted(ctx, sqlc.MarkPlayerQuestAsCompletedParams{
+		QuestID:  questID,
+		PlayerID: playerID,
+	})
+	if err != nil {
+		return quest.PlayerQuestProgression{}, err
+	}
+
+	if err = tx.Commit(ctx); err != nil {
+		return quest.PlayerQuestProgression{}, err
+	}
+
+	return c.GetPlayerQuestProgression(ctx, q, playerID)
+}

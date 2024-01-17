@@ -18,6 +18,8 @@ type (
 	// Get the player quest progression
 	StorageGetPlayerQuestProgressionFunc func(ctx context.Context, quest Quest, playerID string) (PlayerQuestProgression, error)
 
-	// Marks the player quest task as completed and returns the tasks that were waiting for this completion
-	StorageMarkPlayerQuestTaskAsCompletedFunc func(ctx context.Context, quest Quest, task Task, playerID string) ([]Task, error)
+	// Marks all player tasks in the `tasksCompleted` list as completed and
+	// starts player tasks that were previously pending waiting for these completions.
+	// It also marks the player quest as complete if all required tasks are completed.
+	StorageUpdatePlayerQuestProgressionFunc func(ctx context.Context, quest Quest, tasksCompleted []string, playerID string) (PlayerQuestProgression, error)
 )

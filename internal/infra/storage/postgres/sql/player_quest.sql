@@ -36,3 +36,51 @@ SELECT pqt.*, sqlc.embed(t)
 FROM "player_quest_tasks" pqt
 JOIN "tasks_with_its_dependencies" t ON t."id" = pqt."task_id"
 WHERE pqt."player_id" = $1 AND t."quest_id" = $2;
+
+---------------------------------------
+-- Mark Quest And Tasks As Completed --
+---------------------------------------
+
+-- name: MarkPlayerQuestTasksAsCompleted :exec
+UPDATE "player_quest_tasks"
+SET "completed_at" = NOW()
+WHERE "player_id" = $1 AND "task_id" IN (sqlc.slice('tasks_completed'));
+
+-- name: StartPlayerTasksThatHadTheDependenciesCompleted :exec
+WITH "pq_tasks_status" AS (
+    SELECT pqt."task_id", (pqt."completed_at" IS NOT NULL) AS "completed"
+    FROM "player_quests" pq
+    JOIN "player_quest_tasks" pqt ON pqt."player_quest_id" = pq."id"
+    WHERE pq."quest_id" = $1 AND pq."player_id" = $2
+), "pq_pending_tasks" AS (
+	SELECT t."id"
+	FROM "tasks" t
+	WHERE
+	    t."quest_id" = $1 AND
+	    t."id" NOT IN (SELECT "task_id" FROM "pq_tasks_status")
+), "pq_tasks_ready_to_start" AS (
+    SELECT td."this_task" AS "id"
+    FROM "tasks_dependencies" td
+    WHERE td."this_task" IN (SELECT "id" FROM "pq_pending_tasks")
+    GROUP BY td."this_task"
+    HAVING ARRAY_AGG(td."depends_on_task") <@ ARRAY_AGG((SELECT "task_id" FROM "pq_tasks_status" WHERE "completed" = TRUE))
+)
+INSERT INTO "player_quest_tasks" ("player_id", "player_quest_id", "task_id")
+SELECT $2, pq2."id", trs."id"
+FROM "pq_tasks_ready_to_start" trs
+CROSS JOIN "player_quests" pq2
+WHERE pq2."quest_id" = $1 AND pq2."player_id" = $2;
+
+-- name: MarkPlayerQuestAsCompleted :exec
+WITH "completion_list" AS (
+	SELECT (pqt."completed_at" IS NOT NULL) AS "completed"
+	FROM "tasks" t
+	LEFT JOIN "player_quest_tasks" pqt ON t.id = pqt."task_id" AND pqt."player_id" = $2
+	WHERE t."quest_id" = $1
+)
+UPDATE "player_quests"
+SET "completed_at" = NOW()
+WHERE 
+	"player_quests"."player_id" = $2 AND
+	"player_quests"."quest_id" = $1 AND 
+	TRUE = ALL((SELECT "completed" FROM "completion_list"));

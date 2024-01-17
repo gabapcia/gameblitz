@@ -8,6 +8,7 @@ import (
 
 var (
 	ErrTaskValidationError          = errors.New("task validation error")
+	ErrInvalidTaskID                = errors.New("invalid task id")
 	ErrInvalidTaskName              = errors.New("invalid task name")
 	ErrInvalidTaskRule              = errors.New("invalid task rule")
 	ErrInvalidSucessRuleDataExemple = errors.New("success exemple task rule data returned false")

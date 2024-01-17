@@ -31,6 +31,26 @@ type (
 	}
 )
 
+func (p PlayerQuestProgression) applyRuleToActiveTasks(data string) ([]string, error) {
+	tasksCompleted := make([]string, 0)
+	for _, taskProgression := range p.TasksProgression {
+		if !taskProgression.CompletedAt.IsZero() {
+			continue
+		}
+
+		pass, err := RuleApply(taskProgression.Task.Rule, data)
+		if err != nil {
+			return nil, err
+		}
+
+		if pass {
+			tasksCompleted = append(tasksCompleted, taskProgression.Task.ID)
+		}
+	}
+
+	return tasksCompleted, nil
+}
+
 func BuildStartQuestForPlayerFunc(storageStartQuestForPlayerFunc StorageStartQuestForPlayerFunc) StartQuestForPlayerFunc {
 	return func(ctx context.Context, quest Quest, playerID string) (PlayerQuestProgression, error) {
 		return storageStartQuestForPlayerFunc(ctx, quest, playerID)
@@ -40,5 +60,37 @@ func BuildStartQuestForPlayerFunc(storageStartQuestForPlayerFunc StorageStartQue
 func BuildGetPlayerQuestProgression(storageGetPlayerQuestProgressionFunc StorageGetPlayerQuestProgressionFunc) GetPlayerQuestProgressionFunc {
 	return func(ctx context.Context, quest Quest, playerID string) (PlayerQuestProgression, error) {
 		return storageGetPlayerQuestProgressionFunc(ctx, quest, playerID)
+	}
+}
+
+func BuildUpdatePlayerQuestProgressionFunc(
+	storageGetPlayerQuestProgressionFunc StorageGetPlayerQuestProgressionFunc,
+	storageUpdatePlayerQuestProgressionFunc StorageUpdatePlayerQuestProgressionFunc,
+) UpdatePlayerQuestProgressionFunc {
+	return func(ctx context.Context, quest Quest, playerID, taskDataToCheck string) (PlayerQuestProgression, error) {
+		previousProgression, err := storageGetPlayerQuestProgressionFunc(ctx, quest, playerID)
+		if err != nil {
+			return PlayerQuestProgression{}, nil
+		}
+
+		if !previousProgression.CompletedAt.IsZero() {
+			return PlayerQuestProgression{}, ErrPlayerQuestAlreadyCompleted
+		}
+
+		tasksCompleted, err := previousProgression.applyRuleToActiveTasks(taskDataToCheck)
+		if err != nil {
+			return PlayerQuestProgression{}, err
+		}
+
+		if len(tasksCompleted) == 0 {
+			return previousProgression, nil
+		}
+
+		playerProgression, err := storageUpdatePlayerQuestProgressionFunc(ctx, quest, tasksCompleted, playerID)
+		if err != nil {
+			return PlayerQuestProgression{}, nil
+		}
+
+		return playerProgression, nil
 	}
 }
