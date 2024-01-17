@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 )
 
@@ -49,15 +50,29 @@ func (q NewQuestData) validate() error {
 	if len(q.Tasks) != len(q.TasksValidators) {
 		errList = append(errList, ErrQuestTaskRuleSuceessDataIncomplete)
 	} else {
+		itsOkValidateDependencyCycle := true
 		for i, task := range q.Tasks {
 			if err := task.validate(q.TasksValidators[i]); err != nil {
 				errList = append(errList, fmt.Errorf("Task #%d\n%w", i, err))
+			}
+
+			for _, dependencyIndex := range task.DependsOn {
+				if dependencyIndex < 0 || dependencyIndex >= len(task.DependsOn) {
+					itsOkValidateDependencyCycle = false
+					errList = append(errList, ErrInvalidTaskDependencyIndex)
+				}
+			}
+		}
+
+		if itsOkValidateDependencyCycle {
+			if taskDepencyIsCyclic(q.Tasks) {
+				errList = slices.Insert(errList, 0, ErrTaskDependencyCycle)
 			}
 		}
 	}
 
 	if len(errList) > 0 {
-		errList = append(errList, ErrQuestValidationError)
+		errList = slices.Insert(errList, 0, ErrQuestValidationError)
 	}
 
 	return errors.Join(errList...)

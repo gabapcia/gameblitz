@@ -9,6 +9,24 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type PlayerQuest struct {
+	StartedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	ID          uuid.UUID
+	PlayerID    string
+	QuestID     uuid.UUID
+	CompletedAt pgtype.Timestamptz
+}
+
+type PlayerQuestTask struct {
+	StartedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	ID          uuid.UUID
+	PlayerID    string
+	TaskID      uuid.UUID
+	CompletedAt pgtype.Timestamptz
+}
+
 type Quest struct {
 	CreatedAt   pgtype.Timestamptz
 	UpdatedAt   pgtype.Timestamptz
@@ -20,13 +38,18 @@ type Quest struct {
 }
 
 type Task struct {
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-	DeletedAt   pgtype.Timestamptz
-	QuestID     uuid.UUID
-	ID          uuid.UUID
-	Name        string
-	Description string
-	DependsOn   pgtype.UUID
-	Rule        string
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+	DeletedAt             pgtype.Timestamptz
+	QuestID               uuid.UUID
+	ID                    uuid.UUID
+	Name                  string
+	Description           string
+	RequiredForCompletion bool
+	Rule                  string
+}
+
+type TasksDependency struct {
+	ThisTask      uuid.UUID
+	DependsOnTask uuid.UUID
 }

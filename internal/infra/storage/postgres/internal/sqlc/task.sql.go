@@ -9,21 +9,20 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createTask = `-- name: CreateTask :one
-INSERT INTO "tasks" ("quest_id", "name", "description", "depends_on", "rule")
+INSERT INTO "tasks" ("quest_id", "name", "description", "required_for_completion", "rule")
 VALUES ($1, $2, $3, $4, $5)
-RETURNING created_at, updated_at, deleted_at, quest_id, id, name, description, depends_on, rule
+RETURNING created_at, updated_at, deleted_at, quest_id, id, name, description, required_for_completion, rule
 `
 
 type CreateTaskParams struct {
-	QuestID     uuid.UUID
-	Name        string
-	Description string
-	DependsOn   pgtype.UUID
-	Rule        string
+	QuestID               uuid.UUID
+	Name                  string
+	Description           string
+	RequiredForCompletion bool
+	Rule                  string
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
@@ -31,7 +30,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		arg.QuestID,
 		arg.Name,
 		arg.Description,
-		arg.DependsOn,
+		arg.RequiredForCompletion,
 		arg.Rule,
 	)
 	var i Task
@@ -43,37 +42,45 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.DependsOn,
+		&i.RequiredForCompletion,
 		&i.Rule,
 	)
 	return i, err
 }
 
 const listTasksByQuestID = `-- name: ListTasksByQuestID :many
-SELECT created_at, updated_at, deleted_at, quest_id, id, name, description, depends_on, rule
+SELECT t.created_at, t.updated_at, t.deleted_at, t.quest_id, t.id, t.name, t.description, t.required_for_completion, t.rule, ARRAY_AGG(td."depends_on_task")::UUID[] AS "depends_on"
 FROM "tasks" t
+LEFT JOIN "tasks_dependencies" td ON t."id" = td."this_task"
 WHERE t."quest_id" = $1 AND t."deleted_at" IS NULL
+GROUP BY t."id"
 `
 
-func (q *Queries) ListTasksByQuestID(ctx context.Context, questID uuid.UUID) ([]Task, error) {
+type ListTasksByQuestIDRow struct {
+	Task      Task
+	DependsOn []uuid.UUID
+}
+
+func (q *Queries) ListTasksByQuestID(ctx context.Context, questID uuid.UUID) ([]ListTasksByQuestIDRow, error) {
 	rows, err := q.db.Query(ctx, listTasksByQuestID, questID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Task
+	var items []ListTasksByQuestIDRow
 	for rows.Next() {
-		var i Task
+		var i ListTasksByQuestIDRow
 		if err := rows.Scan(
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-			&i.QuestID,
-			&i.ID,
-			&i.Name,
-			&i.Description,
+			&i.Task.CreatedAt,
+			&i.Task.UpdatedAt,
+			&i.Task.DeletedAt,
+			&i.Task.QuestID,
+			&i.Task.ID,
+			&i.Task.Name,
+			&i.Task.Description,
+			&i.Task.RequiredForCompletion,
+			&i.Task.Rule,
 			&i.DependsOn,
-			&i.Rule,
 		); err != nil {
 			return nil, err
 		}
@@ -83,6 +90,21 @@ func (q *Queries) ListTasksByQuestID(ctx context.Context, questID uuid.UUID) ([]
 		return nil, err
 	}
 	return items, nil
+}
+
+const registerTaskDependency = `-- name: RegisterTaskDependency :exec
+INSERT INTO "tasks_dependencies" ("this_task", "depends_on_task")
+VALUES ($1, $2)
+`
+
+type RegisterTaskDependencyParams struct {
+	ThisTask      uuid.UUID
+	DependsOnTask uuid.UUID
+}
+
+func (q *Queries) RegisterTaskDependency(ctx context.Context, arg RegisterTaskDependencyParams) error {
+	_, err := q.db.Exec(ctx, registerTaskDependency, arg.ThisTask, arg.DependsOnTask)
+	return err
 }
 
 const softDeleteTasksByQuestID = `-- name: SoftDeleteTasksByQuestID :exec

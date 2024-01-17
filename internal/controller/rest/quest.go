@@ -12,10 +12,11 @@ type CreateQuestReq struct {
 	Name        string `json:"name"`        // Quest name
 	Description string `json:"description"` // Quest details
 	Tasks       []struct {
-		Name        string `json:"name"`        // Task name
-		Description string `json:"description"` // Task details
-		DependsOn   *int   `json:"dependsOn"`   // Array index of the task that needs to be completed before this one can be started
-		Rule        string `json:"rule"`        // Task completion logic as JsonLogic. See https://jsonlogic.com/
+		Name                  string `json:"name"`                  // Task name
+		Description           string `json:"description"`           // Task details
+		DependsOn             []int  `json:"dependsOn"`             // List of array indexes of the tasks that needs to be completed before this one can be started
+		RequiredForCompletion *bool  `json:"requiredForCompletion"` // Is this task required for the quest completion? Defaults to `true`
+		Rule                  string `json:"rule"`                  // Task completion logic as JsonLogic. See https://jsonlogic.com/
 	} `json:"tasks"` // Quest task list
 	TasksValidators []string `json:"tasksValidators"` // Quest task list success validation data
 }
@@ -33,11 +34,17 @@ type Quest struct {
 func (q CreateQuestReq) toDomain(gameID string) quest.NewQuestData {
 	tasks := make([]quest.NewTaskData, len(q.Tasks))
 	for i, t := range q.Tasks {
+		requiredForCompletion := true
+		if t.RequiredForCompletion != nil {
+			requiredForCompletion = *t.RequiredForCompletion
+		}
+
 		tasks[i] = quest.NewTaskData{
-			Name:        t.Name,
-			Description: t.Description,
-			DependsOn:   t.DependsOn,
-			Rule:        t.Rule,
+			Name:                  t.Name,
+			Description:           t.Description,
+			DependsOn:             t.DependsOn,
+			RequiredForCompletion: requiredForCompletion,
+			Rule:                  t.Rule,
 		}
 	}
 

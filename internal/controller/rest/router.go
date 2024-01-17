@@ -27,6 +27,7 @@ type Config struct {
 	CacheExpiration           time.Duration
 	CacheMiddlewareExpiration time.Duration
 
+	// Leaderboard
 	CreateLeaderboardFunc              leaderboard.CreateFunc
 	GetLeaderboardByIDAndGameIDFunc    leaderboard.GetByIDAndGameIDFunc
 	DeleteLeaderboardByIDAndGameIDFunc leaderboard.SoftDeleteFunc
@@ -34,10 +35,16 @@ type Config struct {
 	UpsertPlayerRankFunc leaderboard.UpsertPlayerRankFunc
 	RankingFunc          leaderboard.RankingFunc
 
+	// Quest
 	CreateQuestFunc           quest.CreateQuestFunc
 	GetQuestByIDAndGameIDFunc quest.GetQuestByIDAndGameIDFunc
 	SoftDeleteQuestFunc       quest.SoftDeleteQuestFunc
 
+	StartQuestForPlayerFunc          quest.StartQuestForPlayerFunc
+	GetPlayerQuestProgressionFunc    quest.GetPlayerQuestProgressionFunc
+	UpdatePlayerQuestProgressionFunc quest.UpdatePlayerQuestProgressionFunc
+
+	// Statistic
 	CreateStatisticFunc                  statistic.CreateFunc
 	GetStatisticByIDAndGameIDFunc        statistic.GetByIDAndGameIDFunc
 	SoftDeleteStatisticByIDAndGameIDFunc statistic.SoftDeleteByIDAndGameIDFunc

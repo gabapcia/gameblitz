@@ -5,70 +5,66 @@ import (
 
 	"github.com/gabarcia/metagaming-api/internal/infra/storage/postgres/internal/sqlc"
 	"github.com/gabarcia/metagaming-api/internal/quest"
-	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/google/uuid"
 )
 
-func sqlcTaskToDomain(t sqlc.Task) quest.Task {
-	var (
-		dependsOnValue, _ = t.DependsOn.Value()
-		dependsOn         = ""
-	)
-	if dependsOnValue != nil {
-		dependsOn = dependsOnValue.(string)
+func sqlcTaskToDomain(t sqlc.Task, dependsOnUUIDs []uuid.UUID) quest.Task {
+	dependsOn := make([]string, len(dependsOnUUIDs))
+	for _, td := range dependsOnUUIDs {
+		dependsOn = append(dependsOn, td.String())
 	}
 
 	return quest.Task{
-		CreatedAt:   t.CreatedAt.Time,
-		UpdatedAt:   t.UpdatedAt.Time,
-		DeletedAt:   t.DeletedAt.Time,
-		ID:          t.ID.String(),
-		Name:        t.Name,
-		Description: t.Description,
-		DependsOn:   dependsOn,
-		Rule:        t.Rule,
+		CreatedAt:             t.CreatedAt.Time,
+		UpdatedAt:             t.UpdatedAt.Time,
+		DeletedAt:             t.DeletedAt.Time,
+		ID:                    t.ID.String(),
+		Name:                  t.Name,
+		Description:           t.Description,
+		DependsOn:             dependsOn,
+		RequiredForCompletion: t.RequiredForCompletion,
+		Rule:                  t.Rule,
 	}
 }
 
-func createQuestTasks(ctx context.Context, queries *sqlc.Queries, questID uuid.UUID, tasks []quest.NewTaskData) ([]sqlc.Task, error) {
+func createQuestTasks(ctx context.Context, queries *sqlc.Queries, questID uuid.UUID, tasks []quest.NewTaskData) (map[sqlc.Task][]uuid.UUID, error) {
 	var (
-		tasksCreated = make([]sqlc.Task, len(tasks))
-		completed    = false
+		rawDependenciesMap = make(map[uuid.UUID][]int)
+		tasksCreatedRows   = make([]sqlc.Task, len(tasks))
 	)
-	for !completed {
-		completed = true
-		for i, task := range tasks {
-			if tasksCreated[i].ID.String() != uuid.Nil.String() {
-				continue
-			}
+	for i, task := range tasks {
+		taskData, err := queries.CreateTask(ctx, sqlc.CreateTaskParams{
+			QuestID:               questID,
+			Name:                  task.Name,
+			Description:           task.Description,
+			RequiredForCompletion: task.RequiredForCompletion,
+			Rule:                  task.Rule,
+		})
+		if err != nil {
+			return nil, err
+		}
 
-			var dependsOn pgtype.UUID
-			if task.DependsOn != nil {
-				dependsOnTaskID := tasksCreated[*task.DependsOn].ID.String()
-				if dependsOnTaskID == uuid.Nil.String() {
-					completed = false
-					continue
-				}
+		tasksCreatedRows[i] = taskData
+		rawDependenciesMap[taskData.ID] = task.DependsOn
+	}
 
-				if err := dependsOn.Scan(dependsOnTaskID); err != nil {
-					return nil, err
-				}
-			}
-
-			taskData, err := queries.CreateTask(ctx, sqlc.CreateTaskParams{
-				QuestID:     questID,
-				Name:        task.Name,
-				Description: task.Description,
-				DependsOn:   dependsOn,
-				Rule:        task.Rule,
+	tasksCreated := make(map[sqlc.Task][]uuid.UUID)
+	for _, taskData := range tasksCreatedRows {
+		dependsOn := make([]uuid.UUID, len(rawDependenciesMap[taskData.ID]))
+		for i, dependsOnIndex := range rawDependenciesMap[taskData.ID] {
+			err := queries.RegisterTaskDependency(ctx, sqlc.RegisterTaskDependencyParams{
+				ThisTask:      taskData.ID,
+				DependsOnTask: tasksCreatedRows[dependsOnIndex].ID,
 			})
 			if err != nil {
 				return nil, err
 			}
 
-			tasksCreated[i] = taskData
+			dependsOn[i] = tasksCreatedRows[dependsOnIndex].ID
 		}
+
+		tasksCreated[taskData] = dependsOn
 	}
 
 	return tasksCreated, nil

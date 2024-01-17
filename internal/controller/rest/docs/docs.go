@@ -802,8 +802,11 @@ const docTemplate = `{
                         "type": "object",
                         "properties": {
                             "dependsOn": {
-                                "description": "Array index of the task that needs to be completed before this one can be started",
-                                "type": "integer"
+                                "description": "List of array indexes of the tasks that needs to be completed before this one can be started",
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
                             },
                             "description": {
                                 "description": "Task details",
@@ -812,6 +815,10 @@ const docTemplate = `{
                             "name": {
                                 "description": "Task name",
                                 "type": "string"
+                            },
+                            "requiredForCompletion": {
+                                "description": "Is this task required for the quest completion? Defaults to ` + "`" + `true` + "`" + `",
+                                "type": "boolean"
                             },
                             "rule": {
                                 "description": "Task completion logic as JsonLogic. See https://jsonlogic.com/",
@@ -1117,8 +1124,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "dependsOn": {
-                    "description": "ID of the task that needs to be completed before this one can be started",
-                    "type": "string"
+                    "description": "IDs from the tasks that needs to be completed before this one can be started",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "description": {
                     "description": "Task details",
@@ -1131,6 +1141,10 @@ const docTemplate = `{
                 "name": {
                     "description": "Task name",
                     "type": "string"
+                },
+                "requiredForCompletion": {
+                    "description": "Is this task required for the quest completion?",
+                    "type": "boolean"
                 },
                 "rule": {
                     "description": "Task completion logic as JsonLogic. See https://jsonlogic.com/",

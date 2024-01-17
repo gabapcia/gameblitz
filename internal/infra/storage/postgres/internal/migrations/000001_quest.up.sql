@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS "tasks" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     "name" VARCHAR NOT NULL,
     "description" TEXT NOT NULL DEFAULT '',
-    "depends_on" UUID REFERENCES "tasks"("id") ON DELETE CASCADE,
+    "required_for_completion" BOOLEAN NOT NULL,
     "rule" TEXT NOT NULL,
 
     CONSTRAINT "name_not_empty_check" CHECK (TRIM("name") <> '')
@@ -32,4 +32,14 @@ CREATE TABLE IF NOT EXISTS "tasks" (
 CREATE INDEX IF NOT EXISTS "idx_task_created_at" ON "tasks" ("created_at");
 CREATE INDEX IF NOT EXISTS "idx_task_deleted_at" ON "tasks" ("deleted_at");
 CREATE INDEX IF NOT EXISTS "idx_task_quest_id" ON "tasks" ("quest_id");
-CREATE INDEX IF NOT EXISTS "idx_task_depends_on" ON "tasks" ("depends_on");
+CREATE INDEX IF NOT EXISTS "idx_task_required_for_completion" ON "tasks" ("required_for_completion");
+
+CREATE TABLE IF NOT EXISTS "tasks_dependencies" (
+    "this_task" UUID NOT NULL REFERENCES "tasks" ("id") ON DELETE CASCADE,
+    "depends_on_task" UUID NOT NULL REFERENCES "tasks" ("id") ON DELETE CASCADE,
+
+    PRIMARY KEY ("this_task", "depends_on_task")
+);
+
+CREATE INDEX IF NOT EXISTS "idx_tasks_dependency_this_task" ON "tasks_dependencies" ("this_task");
+CREATE INDEX IF NOT EXISTS "idx_tasks_dependency_depends_on_task" ON "tasks_dependencies" ("depends_on_task");

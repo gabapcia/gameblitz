@@ -77,9 +77,11 @@ func main() {
 	restConfig := rest.Config{
 		Port: config.Port,
 
-		CacheSorage:     memcached,
-		CacheExpiration: time.Duration(config.MemcachedCacheExpiration) * time.Second,
+		CacheSorage:               memcached,
+		CacheExpiration:           time.Duration(config.MemcachedCacheExpiration) * time.Second,
+		CacheMiddlewareExpiration: time.Duration(config.MemcachedCacheMiddlewareExpiration) * time.Second,
 
+		// Leaderboard
 		CreateLeaderboardFunc:              leaderboard.BuildCreateFunc(redis.CreateLeaderboard),
 		GetLeaderboardByIDAndGameIDFunc:    leaderboard.BuildGetByIDAndGameIDFunc(redis.GetLeaderboardByIDAndGameID),
 		DeleteLeaderboardByIDAndGameIDFunc: leaderboard.BuildSoftDeleteFunc(redis.SoftDeleteLeaderboard),
@@ -87,10 +89,16 @@ func main() {
 		UpsertPlayerRankFunc: leaderboard.BuildUpsertPlayerRankFunc(redis.UpsertPlayerRankValue),
 		RankingFunc:          leaderboard.BuildRankingFunc(redis.GetRanking),
 
+		// Quest
 		CreateQuestFunc:           quest.BuildCreateQuestFunc(postgres.CreateQuest),
 		GetQuestByIDAndGameIDFunc: quest.BuildGetQuestByIDAndGameIDFunc(postgres.GetQuestByIDAndGameID),
 		SoftDeleteQuestFunc:       quest.BuildSoftDeleteQuestFunc(postgres.SoftDeleteQuestByIDAndGameID),
 
+		StartQuestForPlayerFunc:          quest.BuildStartQuestForPlayerFunc(postgres.StartQuestForPlayer),
+		GetPlayerQuestProgressionFunc:    quest.BuildGetPlayerQuestProgression(postgres.GetPlayerQuestProgression),
+		UpdatePlayerQuestProgressionFunc: nil,
+
+		// Statistic
 		CreateStatisticFunc:                  statistic.BuildCreateStatisticFunc(mongo.CreateStatistic),
 		GetStatisticByIDAndGameIDFunc:        statistic.BuildGetStatisticByIDAndGameID(mongo.GetStatisticByIDAndGameID),
 		SoftDeleteStatisticByIDAndGameIDFunc: statistic.BuildSoftDeleteStatistic(mongo.SoftDeleteStatistic),
