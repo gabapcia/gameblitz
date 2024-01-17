@@ -1,9 +1,12 @@
 package rest
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
 	"github.com/gabarcia/metagaming-api/internal/quest"
 	"github.com/gofiber/fiber/v2"
 )
@@ -75,11 +78,59 @@ func questFromDomain(q quest.Quest) Quest {
 }
 
 var (
-	ErrorResponseQuestInvalidGameID = ErrorResponse{Code: "3.0", Message: "Invalid Game ID"}
+	ErrorResponseQuestInvalidGameID = ErrorResponse{Code: "3.0", Message: "Invalid game id"}
 	ErrorResponseQuestInvalid       = ErrorResponse{Code: "3.1", Message: "Invalid quest data"}
 	ErrorResponseQuestNotFound      = ErrorResponse{Code: "3.2", Message: "Quest not found"}
 	ErrorResponseQuestInvalidID     = ErrorResponse{Code: "3.3", Message: "Invalid quest id"}
 )
+
+func buildGetQuestMiddleware(cache fiber.Storage, expiration time.Duration, getQuestByIDAndGameIDFunc quest.GetQuestByIDAndGameIDFunc) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var (
+			id       = c.Params("questId")
+			gameID   = string(c.Request().Header.Peek(gameIDHeader))
+			cacheKey = fmt.Sprintf("GetQuestMiddleware:%s:%s", id, gameID)
+		)
+
+		if gameID == "" {
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalidGameID)
+		}
+
+		if cache != nil {
+			data, err := cache.Get(cacheKey)
+			if err != nil {
+				zap.Error(err, "get cache error")
+			} else if data != nil {
+				var quest quest.Quest
+				if err = json.Unmarshal(data, &quest); err != nil {
+					zap.Error(err, "unmarshal cached quest error")
+				} else {
+					c.Locals("quest", quest)
+					return c.Next()
+				}
+			}
+		}
+
+		quest, err := getQuestByIDAndGameIDFunc(c.Context(), id, gameID)
+		if err != nil {
+			return err
+		}
+
+		if cache != nil {
+			data, err := json.Marshal(quest)
+			if err != nil {
+				zap.Error(err, "marshal quest cache error")
+			} else {
+				if err = cache.Set(cacheKey, data, expiration); err != nil {
+					zap.Error(err, "unable to cache quest")
+				}
+			}
+		}
+
+		c.Locals("quest", quest)
+		return c.Next()
+	}
+}
 
 // @summary Create Quest
 // @description Create a quest and its tasks

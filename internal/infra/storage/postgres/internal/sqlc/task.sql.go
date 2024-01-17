@@ -49,37 +49,30 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 }
 
 const listTasksByQuestID = `-- name: ListTasksByQuestID :many
-SELECT t.created_at, t.updated_at, t.deleted_at, t.quest_id, t.id, t.name, t.description, t.required_for_completion, t.rule, ARRAY_AGG(td."depends_on_task")::UUID[] AS "depends_on"
-FROM "tasks" t
-LEFT JOIN "tasks_dependencies" td ON t."id" = td."this_task"
+SELECT created_at, updated_at, deleted_at, quest_id, id, name, description, required_for_completion, rule, depends_on
+FROM "tasks_with_its_dependencies" t
 WHERE t."quest_id" = $1 AND t."deleted_at" IS NULL
-GROUP BY t."id"
 `
 
-type ListTasksByQuestIDRow struct {
-	Task      Task
-	DependsOn []uuid.UUID
-}
-
-func (q *Queries) ListTasksByQuestID(ctx context.Context, questID uuid.UUID) ([]ListTasksByQuestIDRow, error) {
+func (q *Queries) ListTasksByQuestID(ctx context.Context, questID uuid.UUID) ([]TasksWithItsDependency, error) {
 	rows, err := q.db.Query(ctx, listTasksByQuestID, questID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListTasksByQuestIDRow
+	var items []TasksWithItsDependency
 	for rows.Next() {
-		var i ListTasksByQuestIDRow
+		var i TasksWithItsDependency
 		if err := rows.Scan(
-			&i.Task.CreatedAt,
-			&i.Task.UpdatedAt,
-			&i.Task.DeletedAt,
-			&i.Task.QuestID,
-			&i.Task.ID,
-			&i.Task.Name,
-			&i.Task.Description,
-			&i.Task.RequiredForCompletion,
-			&i.Task.Rule,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.QuestID,
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.RequiredForCompletion,
+			&i.Rule,
 			&i.DependsOn,
 		); err != nil {
 			return nil, err

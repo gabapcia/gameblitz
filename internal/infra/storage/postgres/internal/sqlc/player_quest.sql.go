@@ -9,9 +9,11 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getPlayerQuest = `-- name: GetPlayerQuest :one
+
 SELECT started_at, updated_at, id, player_id, quest_id, completed_at
 FROM "player_quests" pq
 WHERE pq."player_id" = $1 AND pq."quest_id" = $2
@@ -22,6 +24,9 @@ type GetPlayerQuestParams struct {
 	QuestID  uuid.UUID
 }
 
+// ---------------------
+// Get Player Quests --
+// ---------------------
 func (q *Queries) GetPlayerQuest(ctx context.Context, arg GetPlayerQuestParams) (PlayerQuest, error) {
 	row := q.db.QueryRow(ctx, getPlayerQuest, arg.PlayerID, arg.QuestID)
 	var i PlayerQuest
@@ -36,7 +41,69 @@ func (q *Queries) GetPlayerQuest(ctx context.Context, arg GetPlayerQuestParams) 
 	return i, err
 }
 
+const getPlayerQuestTasks = `-- name: GetPlayerQuestTasks :many
+SELECT pqt.started_at, pqt.updated_at, pqt.id, pqt.player_id, pqt.player_quest_id, pqt.task_id, pqt.completed_at, t.created_at, t.updated_at, t.deleted_at, t.quest_id, t.id, t.name, t.description, t.required_for_completion, t.rule, t.depends_on
+FROM "player_quest_tasks" pqt
+JOIN "tasks_with_its_dependencies" t ON t."id" = pqt."task_id"
+WHERE pqt."player_id" = $1 AND t."quest_id" = $2
+`
+
+type GetPlayerQuestTasksParams struct {
+	PlayerID string
+	QuestID  uuid.UUID
+}
+
+type GetPlayerQuestTasksRow struct {
+	StartedAt              pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+	ID                     uuid.UUID
+	PlayerID               string
+	PlayerQuestID          uuid.UUID
+	TaskID                 uuid.UUID
+	CompletedAt            pgtype.Timestamptz
+	TasksWithItsDependency TasksWithItsDependency
+}
+
+func (q *Queries) GetPlayerQuestTasks(ctx context.Context, arg GetPlayerQuestTasksParams) ([]GetPlayerQuestTasksRow, error) {
+	rows, err := q.db.Query(ctx, getPlayerQuestTasks, arg.PlayerID, arg.QuestID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPlayerQuestTasksRow
+	for rows.Next() {
+		var i GetPlayerQuestTasksRow
+		if err := rows.Scan(
+			&i.StartedAt,
+			&i.UpdatedAt,
+			&i.ID,
+			&i.PlayerID,
+			&i.PlayerQuestID,
+			&i.TaskID,
+			&i.CompletedAt,
+			&i.TasksWithItsDependency.CreatedAt,
+			&i.TasksWithItsDependency.UpdatedAt,
+			&i.TasksWithItsDependency.DeletedAt,
+			&i.TasksWithItsDependency.QuestID,
+			&i.TasksWithItsDependency.ID,
+			&i.TasksWithItsDependency.Name,
+			&i.TasksWithItsDependency.Description,
+			&i.TasksWithItsDependency.RequiredForCompletion,
+			&i.TasksWithItsDependency.Rule,
+			&i.TasksWithItsDependency.DependsOn,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const startPlayerQuest = `-- name: StartPlayerQuest :one
+
 INSERT INTO "player_quests" ("player_id", "quest_id")
 SELECT $1, q."id"
 FROM "quests" q
@@ -49,6 +116,9 @@ type StartPlayerQuestParams struct {
 	QuestID  uuid.UUID
 }
 
+// ----------------------
+// Start Player Quest --
+// ----------------------
 func (q *Queries) StartPlayerQuest(ctx context.Context, arg StartPlayerQuestParams) (PlayerQuest, error) {
 	row := q.db.QueryRow(ctx, startPlayerQuest, arg.PlayerID, arg.QuestID)
 	var i PlayerQuest
@@ -61,4 +131,67 @@ func (q *Queries) StartPlayerQuest(ctx context.Context, arg StartPlayerQuestPara
 		&i.CompletedAt,
 	)
 	return i, err
+}
+
+const startPlayerTasksForQuest = `-- name: StartPlayerTasksForQuest :many
+WITH "player_quest_tasks_created" AS (
+    INSERT INTO "player_quest_tasks" ("player_id", "player_quest_id", "task_id")
+    SELECT pq."player_id", $1, t."id"
+    FROM "player_quests" pq
+    JOIN "tasks_with_its_dependencies" t ON t."quest_id" = pq."quest_id"
+    WHERE pq."id" = $1 AND ARRAY_LENGTH(t."depends_on", 1) IS NULL
+    RETURNING started_at, updated_at, id, player_id, player_quest_id, task_id, completed_at
+)
+SELECT pqt.started_at, pqt.updated_at, pqt.id, pqt.player_id, pqt.player_quest_id, pqt.task_id, pqt.completed_at, twd.created_at, twd.updated_at, twd.deleted_at, twd.quest_id, twd.id, twd.name, twd.description, twd.required_for_completion, twd.rule, twd.depends_on
+FROM "player_quest_tasks_created" pqt
+JOIN "tasks_with_its_dependencies" twd ON twd."id" = pqt."task_id"
+`
+
+type StartPlayerTasksForQuestRow struct {
+	StartedAt              pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+	ID                     uuid.UUID
+	PlayerID               string
+	PlayerQuestID          uuid.UUID
+	TaskID                 uuid.UUID
+	CompletedAt            pgtype.Timestamptz
+	TasksWithItsDependency TasksWithItsDependency
+}
+
+func (q *Queries) StartPlayerTasksForQuest(ctx context.Context, playerQuestID uuid.UUID) ([]StartPlayerTasksForQuestRow, error) {
+	rows, err := q.db.Query(ctx, startPlayerTasksForQuest, playerQuestID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []StartPlayerTasksForQuestRow
+	for rows.Next() {
+		var i StartPlayerTasksForQuestRow
+		if err := rows.Scan(
+			&i.StartedAt,
+			&i.UpdatedAt,
+			&i.ID,
+			&i.PlayerID,
+			&i.PlayerQuestID,
+			&i.TaskID,
+			&i.CompletedAt,
+			&i.TasksWithItsDependency.CreatedAt,
+			&i.TasksWithItsDependency.UpdatedAt,
+			&i.TasksWithItsDependency.DeletedAt,
+			&i.TasksWithItsDependency.QuestID,
+			&i.TasksWithItsDependency.ID,
+			&i.TasksWithItsDependency.Name,
+			&i.TasksWithItsDependency.Description,
+			&i.TasksWithItsDependency.RequiredForCompletion,
+			&i.TasksWithItsDependency.Rule,
+			&i.TasksWithItsDependency.DependsOn,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

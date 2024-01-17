@@ -15,6 +15,7 @@ var (
 	ErrQuestTaskRuleSuceessDataIncomplete = errors.New("missing success data for some tasks")
 	ErrInvalidQuestID                     = errors.New("invalid quest id")
 	ErrQuestNotFound                      = errors.New("quest not found")
+	ErrQuestWithoutTasks                  = errors.New("a quest task list must not be empty")
 )
 
 type NewQuestData struct {
@@ -47,7 +48,9 @@ func (q NewQuestData) validate() error {
 		errList = append(errList, ErrQuestMissingGameID)
 	}
 
-	if len(q.Tasks) != len(q.TasksValidators) {
+	if len(q.Tasks) == 0 {
+		errList = append(errList, ErrQuestWithoutTasks)
+	} else if len(q.Tasks) != len(q.TasksValidators) {
 		errList = append(errList, ErrQuestTaskRuleSuceessDataIncomplete)
 	} else {
 		itsOkValidateDependencyCycle := true
@@ -57,7 +60,7 @@ func (q NewQuestData) validate() error {
 			}
 
 			for _, dependencyIndex := range task.DependsOn {
-				if dependencyIndex < 0 || dependencyIndex >= len(task.DependsOn) {
+				if dependencyIndex < 0 || dependencyIndex >= len(q.Tasks) {
 					itsOkValidateDependencyCycle = false
 					errList = append(errList, ErrInvalidTaskDependencyIndex)
 				}

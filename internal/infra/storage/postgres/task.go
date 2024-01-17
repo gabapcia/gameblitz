@@ -9,10 +9,29 @@ import (
 	"github.com/google/uuid"
 )
 
+func sqlcTaskWithItsDependenciesToDomain(t sqlc.TasksWithItsDependency) quest.Task {
+	dependsOn := make([]string, len(t.DependsOn))
+	for i, td := range t.DependsOn {
+		dependsOn[i] = td.String()
+	}
+
+	return quest.Task{
+		CreatedAt:             t.CreatedAt.Time,
+		UpdatedAt:             t.UpdatedAt.Time,
+		DeletedAt:             t.DeletedAt.Time,
+		ID:                    t.ID.String(),
+		Name:                  t.Name,
+		Description:           t.Description,
+		DependsOn:             dependsOn,
+		RequiredForCompletion: t.RequiredForCompletion,
+		Rule:                  t.Rule,
+	}
+}
+
 func sqlcTaskToDomain(t sqlc.Task, dependsOnUUIDs []uuid.UUID) quest.Task {
 	dependsOn := make([]string, len(dependsOnUUIDs))
-	for _, td := range dependsOnUUIDs {
-		dependsOn = append(dependsOn, td.String())
+	for i, td := range dependsOnUUIDs {
+		dependsOn[i] = td.String()
 	}
 
 	return quest.Task{

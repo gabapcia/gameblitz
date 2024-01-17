@@ -11,6 +11,24 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+func sqlcQuestWithTaskViewToDomain(q sqlc.Quest, ts []sqlc.TasksWithItsDependency) quest.Quest {
+	tasks := make([]quest.Task, 0)
+	for _, t := range ts {
+		tasks = append(tasks, sqlcTaskWithItsDependenciesToDomain(t))
+	}
+
+	return quest.Quest{
+		CreatedAt:   q.CreatedAt.Time,
+		UpdatedAt:   q.UpdatedAt.Time,
+		DeletedAt:   q.DeletedAt.Time,
+		ID:          q.ID.String(),
+		GameID:      q.GameID,
+		Name:        q.Name,
+		Description: q.Description,
+		Tasks:       tasks,
+	}
+}
+
 func sqlcQuestToDomain(q sqlc.Quest, ts map[sqlc.Task][]uuid.UUID) quest.Quest {
 	tasks := make([]quest.Task, 0)
 	for t, ds := range ts {
@@ -73,17 +91,12 @@ func (c connection) GetQuestByIDAndGameID(ctx context.Context, id, gameID string
 		return quest.Quest{}, err
 	}
 
-	tasksDataRaw, err := c.queries.ListTasksByQuestID(ctx, questData.ID)
+	tasksData, err := c.queries.ListTasksByQuestID(ctx, questData.ID)
 	if err != nil {
 		return quest.Quest{}, err
 	}
 
-	tasksData := make(map[sqlc.Task][]uuid.UUID)
-	for _, row := range tasksDataRaw {
-		tasksData[row.Task] = row.DependsOn
-	}
-
-	return sqlcQuestToDomain(questData, tasksData), nil
+	return sqlcQuestWithTaskViewToDomain(questData, tasksData), nil
 }
 
 func (c connection) SoftDeleteQuestByIDAndGameID(ctx context.Context, id, gameID string) error {

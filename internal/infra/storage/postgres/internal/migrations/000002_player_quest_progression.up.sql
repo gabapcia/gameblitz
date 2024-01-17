@@ -9,13 +9,30 @@ CREATE TABLE IF NOT EXISTS "player_quests" (
     CONSTRAINT "player_quest_unique" UNIQUE ("player_id", "quest_id")
 );
 
+CREATE OR REPLACE FUNCTION validate_task_belongs_to_quest("task_id" UUID, "player_quest_id" UUID) RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1
+        FROM "tasks" t
+        JOIN "quests" q ON q."id" = t."quest_id"
+        WHERE
+            t."id" = "task_id" AND
+            q."id" = (SELECT "quest_id" FROM "player_quests" WHERE "id" = "player_quest_id")
+    );
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TABLE IF NOT EXISTS "player_quest_tasks" (
     "started_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "id" UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     "player_id" VARCHAR NOT NULL,
+    "player_quest_id" UUID NOT NULL REFERENCES "player_quests" ("id") ON DELETE CASCADE,
     "task_id" UUID NOT NULL REFERENCES "tasks" ("id") ON DELETE CASCADE,
     "completed_at" TIMESTAMPTZ DEFAULT NULL,
 
-    CONSTRAINT "player_quest_task_unique" UNIQUE ("player_id", "task_id")
+    CONSTRAINT "player_quest_task_unique" UNIQUE ("player_id", "task_id"),
+    CONSTRAINT "task_belongs_to_quest_check" CHECK (validate_task_belongs_to_quest("task_id", "player_quest_id"))
 );
+
+CREATE INDEX IF NOT EXISTS "idx_player_quest_task_player_quest_id" ON "player_quest_tasks" ("player_quest_id");

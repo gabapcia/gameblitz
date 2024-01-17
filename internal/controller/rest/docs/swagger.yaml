@@ -150,6 +150,46 @@ definitions:
         description: Last time that the leaderboard info was updated
         type: string
     type: object
+  rest.PlayerQuestProgression:
+    properties:
+      completedAt:
+        description: Time the player completed the quest
+        type: string
+      playerId:
+        description: Player's ID
+        type: string
+      quest:
+        allOf:
+        - $ref: '#/definitions/rest.Quest'
+        description: Quest Config Data
+      startedAt:
+        description: Time the player started the quest
+        type: string
+      tasksProgression:
+        description: Tasks progression
+        items:
+          $ref: '#/definitions/rest.PlayerQuestTaskProgression'
+        type: array
+      updatedAt:
+        description: Last time the player updated the quest progression
+        type: string
+    type: object
+  rest.PlayerQuestTaskProgression:
+    properties:
+      completedAt:
+        description: Time the player completed the task
+        type: string
+      startedAt:
+        description: Time the player started the task
+        type: string
+      task:
+        allOf:
+        - $ref: '#/definitions/rest.Task'
+        description: Task config data
+      updatedAt:
+        description: Last time the player updated the task progression
+        type: string
+    type: object
   rest.PlayerStatisticProgression:
     properties:
       currentValue:
@@ -623,6 +663,83 @@ paths:
           schema:
             $ref: '#/definitions/rest.ErrorResponse'
       summary: Get Quest By ID
+  /api/v1/quests/{questId}/players/{playerId}:
+    get:
+      description: Get a player's quest progression
+      parameters:
+      - description: Game ID responsible for the quest
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: Quest ID
+        in: path
+        name: questId
+        required: true
+        type: string
+      - description: Player ID
+        in: path
+        name: playerId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.PlayerQuestProgression'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Get Player Quest Progression
+    post:
+      description: Start a player's quest progression
+      parameters:
+      - description: Game ID responsible for the quest
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: Quest ID
+        in: path
+        name: questId
+        required: true
+        type: string
+      - description: Player ID
+        in: path
+        name: playerId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/rest.PlayerQuestProgression'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Start Player Quest Progression
   /api/v1/statistics:
     post:
       consumes:

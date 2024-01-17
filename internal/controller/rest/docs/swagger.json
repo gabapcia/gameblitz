@@ -459,6 +459,120 @@
                 }
             }
         },
+        "/api/v1/quests/{questId}/players/{playerId}": {
+            "get": {
+                "description": "Get a player's quest progression",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get Player Quest Progression",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the quest",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Quest ID",
+                        "name": "questId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "playerId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rest.PlayerQuestProgression"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Start a player's quest progression",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Start Player Quest Progression",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the quest",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Quest ID",
+                        "name": "questId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "playerId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/rest.PlayerQuestProgression"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/statistics": {
             "post": {
                 "description": "Create a statistic",
@@ -937,6 +1051,67 @@
                 },
                 "updatedAt": {
                     "description": "Last time that the leaderboard info was updated",
+                    "type": "string"
+                }
+            }
+        },
+        "rest.PlayerQuestProgression": {
+            "type": "object",
+            "properties": {
+                "completedAt": {
+                    "description": "Time the player completed the quest",
+                    "type": "string"
+                },
+                "playerId": {
+                    "description": "Player's ID",
+                    "type": "string"
+                },
+                "quest": {
+                    "description": "Quest Config Data",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rest.Quest"
+                        }
+                    ]
+                },
+                "startedAt": {
+                    "description": "Time the player started the quest",
+                    "type": "string"
+                },
+                "tasksProgression": {
+                    "description": "Tasks progression",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rest.PlayerQuestTaskProgression"
+                    }
+                },
+                "updatedAt": {
+                    "description": "Last time the player updated the quest progression",
+                    "type": "string"
+                }
+            }
+        },
+        "rest.PlayerQuestTaskProgression": {
+            "type": "object",
+            "properties": {
+                "completedAt": {
+                    "description": "Time the player completed the task",
+                    "type": "string"
+                },
+                "startedAt": {
+                    "description": "Time the player started the task",
+                    "type": "string"
+                },
+                "task": {
+                    "description": "Task config data",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rest.Task"
+                        }
+                    ]
+                },
+                "updatedAt": {
+                    "description": "Last time the player updated the task progression",
                     "type": "string"
                 }
             }

@@ -15,7 +15,7 @@ func sqcStartQuestForPlayerDataToDomain(pq sqlc.PlayerQuest, q quest.Quest, ts [
 		tasksProgression[i] = quest.PlayerTaskProgression{
 			StartedAt:   t.StartedAt.Time,
 			UpdatedAt:   t.UpdatedAt.Time,
-			Task:        sqlcTaskToDomain(t.Task, t.DependsOn),
+			Task:        sqlcTaskWithItsDependenciesToDomain(t.TasksWithItsDependency),
 			CompletedAt: t.CompletedAt.Time,
 		}
 	}
@@ -36,7 +36,7 @@ func sqlcGetPlayerQuestDataToDomain(pq sqlc.PlayerQuest, q quest.Quest, ts []sql
 		tasksProgression[i] = quest.PlayerTaskProgression{
 			StartedAt:   t.StartedAt.Time,
 			UpdatedAt:   t.UpdatedAt.Time,
-			Task:        sqlcTaskToDomain(t.Task, t.DependsOn),
+			Task:        sqlcTaskWithItsDependenciesToDomain(t.TasksWithItsDependency),
 			CompletedAt: t.CompletedAt.Time,
 		}
 	}
@@ -73,15 +73,16 @@ func (c connection) StartQuestForPlayer(ctx context.Context, q quest.Quest, play
 		return quest.PlayerQuestProgression{}, err
 	}
 
-	playerQuestTasksData, err := queries.StartPlayerTasksForQuest(ctx, sqlc.StartPlayerTasksForQuestParams{
-		PlayerID: playerID,
-		QuestID:  playerQuestData.QuestID,
-	})
+	playerQuestTasksData, err := queries.StartPlayerTasksForQuest(ctx, playerQuestData.ID)
 	if err != nil {
 		return quest.PlayerQuestProgression{}, err
 	}
 
-	return sqcStartQuestForPlayerDataToDomain(playerQuestData, q, playerQuestTasksData), tx.Commit(ctx)
+	if err = tx.Commit(ctx); err != nil {
+		return quest.PlayerQuestProgression{}, err
+	}
+
+	return sqcStartQuestForPlayerDataToDomain(playerQuestData, q, playerQuestTasksData), nil
 }
 
 func (c connection) GetPlayerQuestProgression(ctx context.Context, q quest.Quest, playerID string) (quest.PlayerQuestProgression, error) {

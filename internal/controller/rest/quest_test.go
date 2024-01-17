@@ -9,13 +9,101 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
 	"github.com/gabarcia/metagaming-api/internal/quest"
+	"github.com/gofiber/fiber/v2"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestBuildGetQuestMiddleware(t *testing.T) {
+	var (
+		questID = uuid.NewString()
+		gameID  = uuid.NewString()
+	)
+
+	t.Run("OK", func(t *testing.T) {
+		getQuestMiddleware := buildGetQuestMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (quest.Quest, error) {
+			return quest.Quest{ID: id, GameID: gameID}, nil
+		})
+
+		app := fiber.New()
+		app.Get("/:questId", getQuestMiddleware, func(c *fiber.Ctx) error {
+			quest := c.Locals("quest")
+			return c.Status(http.StatusOK).JSON(quest)
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", questID), nil)
+
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var body Quest
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, questID, body.ID)
+		assert.Equal(t, gameID, body.GameID)
+	})
+
+	t.Run("Missing Game ID", func(t *testing.T) {
+		getQuestMiddleware := buildGetQuestMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (quest.Quest, error) {
+			return quest.Quest{ID: id, GameID: gameID}, nil
+		})
+
+		app := fiber.New()
+		app.Get("/:questId", getQuestMiddleware, func(c *fiber.Ctx) error {
+			quest := c.Locals("quest")
+			return c.Status(http.StatusOK).JSON(quest)
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", questID), nil)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+
+		var body ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseQuestInvalidGameID.Code, body.Code)
+		assert.Equal(t, ErrorResponseQuestInvalidGameID.Message, body.Message)
+	})
+
+	t.Run("Quest Not Found", func(t *testing.T) {
+		getQuestMiddleware := buildGetQuestMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (quest.Quest, error) {
+			return quest.Quest{}, quest.ErrQuestNotFound
+		})
+
+		app := fiber.New(fiber.Config{ErrorHandler: buildErrorHandler()})
+		app.Get("/:questId", getQuestMiddleware, func(c *fiber.Ctx) error {
+			quest := c.Locals("quest")
+			return c.Status(http.StatusOK).JSON(quest)
+		})
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", questID), nil)
+
+		req.Header.Set(gameIDHeader, gameID)
+
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+		var body ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ErrorResponseQuestNotFound.Code, body.Code)
+		assert.Equal(t, ErrorResponseQuestNotFound.Message, body.Message)
+	})
+}
 
 func TestBuildCreateQuestHanlder(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
@@ -47,7 +135,7 @@ func TestBuildCreateQuestHanlder(t *testing.T) {
 				{
 					"name":        "Test Task #0",
 					"description": "Test task description",
-					"dependsOn":   0,
+					"dependsOn":   []int{0},
 					"rule":        `{"==": [{"var": {"fields.bool"}}, true]}`,
 				},
 			},

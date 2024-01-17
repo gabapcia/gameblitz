@@ -19,12 +19,13 @@ type PlayerQuest struct {
 }
 
 type PlayerQuestTask struct {
-	StartedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-	ID          uuid.UUID
-	PlayerID    string
-	TaskID      uuid.UUID
-	CompletedAt pgtype.Timestamptz
+	StartedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+	ID            uuid.UUID
+	PlayerID      string
+	PlayerQuestID uuid.UUID
+	TaskID        uuid.UUID
+	CompletedAt   pgtype.Timestamptz
 }
 
 type Quest struct {
@@ -52,4 +53,17 @@ type Task struct {
 type TasksDependency struct {
 	ThisTask      uuid.UUID
 	DependsOnTask uuid.UUID
+}
+
+type TasksWithItsDependency struct {
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+	DeletedAt             pgtype.Timestamptz
+	QuestID               uuid.UUID
+	ID                    uuid.UUID
+	Name                  string
+	Description           string
+	RequiredForCompletion bool
+	Rule                  string
+	DependsOn             []uuid.UUID
 }

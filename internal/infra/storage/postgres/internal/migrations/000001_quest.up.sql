@@ -43,3 +43,10 @@ CREATE TABLE IF NOT EXISTS "tasks_dependencies" (
 
 CREATE INDEX IF NOT EXISTS "idx_tasks_dependency_this_task" ON "tasks_dependencies" ("this_task");
 CREATE INDEX IF NOT EXISTS "idx_tasks_dependency_depends_on_task" ON "tasks_dependencies" ("depends_on_task");
+
+CREATE OR REPLACE VIEW "tasks_with_its_dependencies" AS
+    SELECT t.*, ARRAY_REMOVE(ARRAY_AGG(td."depends_on_task"), NULL)::UUID[] AS "depends_on" 
+    FROM "tasks" t
+    LEFT JOIN "tasks_dependencies" td on t."id" = td."this_task"
+    GROUP BY t."id"
+    ORDER BY t."created_at" ASC;

@@ -1,3 +1,5 @@
+DROP VIEW IF EXISTS "tasks_with_its_dependencies";
+
 DROP INDEX IF EXISTS "idx_tasks_dependency_this_task" CASCADE;
 DROP INDEX IF EXISTS "idx_tasks_dependency_depends_on_task" CASCADE;
 
