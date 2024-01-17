@@ -343,6 +343,12 @@ definitions:
         description: Last time that the task was updated
         type: string
     type: object
+  rest.UpdatePlayerQuestProgressionReq:
+    properties:
+      data:
+        description: Data to apply the JsonLogic
+        type: string
+    type: object
   rest.UpsertPlayerRankReq:
     properties:
       value:
@@ -702,6 +708,52 @@ paths:
           schema:
             $ref: '#/definitions/rest.ErrorResponse'
       summary: Get Player Quest Progression
+    patch:
+      consumes:
+      - application/json
+      description: Updates a player's quest progression
+      parameters:
+      - description: Game ID responsible for the quest
+        in: header
+        name: X-Game-ID
+        required: true
+        type: string
+      - description: Quest ID
+        in: path
+        name: questId
+        required: true
+        type: string
+      - description: Player ID
+        in: path
+        name: playerId
+        required: true
+        type: string
+      - description: Player data to check
+        in: body
+        name: ProgressData
+        required: true
+        schema:
+          $ref: '#/definitions/rest.UpdatePlayerQuestProgressionReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.PlayerQuestProgression'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.ErrorResponse'
+      summary: Update Player Quest Progression
     post:
       description: Start a player's quest progression
       parameters:

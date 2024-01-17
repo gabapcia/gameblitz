@@ -578,6 +578,74 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "patch": {
+                "description": "Updates a player's quest progression",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Update Player Quest Progression",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID responsible for the quest",
+                        "name": "X-Game-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Quest ID",
+                        "name": "questId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "playerId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Player data to check",
+                        "name": "ProgressData",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rest.UpdatePlayerQuestProgressionReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rest.PlayerQuestProgression"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/api/v1/statistics": {
@@ -1327,6 +1395,15 @@ const docTemplate = `{
                 },
                 "updatedAt": {
                     "description": "Last time that the task was updated",
+                    "type": "string"
+                }
+            }
+        },
+        "rest.UpdatePlayerQuestProgressionReq": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Data to apply the JsonLogic",
                     "type": "string"
                 }
             }

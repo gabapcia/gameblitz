@@ -96,7 +96,7 @@ func main() {
 
 		StartQuestForPlayerFunc:          quest.BuildStartQuestForPlayerFunc(postgres.StartQuestForPlayer),
 		GetPlayerQuestProgressionFunc:    quest.BuildGetPlayerQuestProgression(postgres.GetPlayerQuestProgression),
-		UpdatePlayerQuestProgressionFunc: nil,
+		UpdatePlayerQuestProgressionFunc: quest.BuildUpdatePlayerQuestProgressionFunc(postgres.GetPlayerQuestProgression, postgres.UpdatePlayerQuestProgression),
 
 		// Statistic
 		CreateStatisticFunc:                  statistic.BuildCreateStatisticFunc(mongo.CreateStatistic),

@@ -43,8 +43,13 @@ WHERE pqt."player_id" = $1 AND t."quest_id" = $2;
 
 -- name: MarkPlayerQuestTasksAsCompleted :exec
 UPDATE "player_quest_tasks"
-SET "completed_at" = NOW()
-WHERE "player_id" = $1 AND "task_id" IN (sqlc.slice('tasks_completed'));
+SET
+    "updated_at" = NOW(),
+    "completed_at" = NOW()
+WHERE
+    "player_id" = $1 AND
+    "completed_at" IS NULL AND
+    "task_id" = ANY(sqlc.arg('tasks_completed')::UUID[]);
 
 -- name: StartPlayerTasksThatHadTheDependenciesCompleted :exec
 WITH "pq_tasks_status" AS (
@@ -63,7 +68,7 @@ WITH "pq_tasks_status" AS (
     FROM "tasks_dependencies" td
     WHERE td."this_task" IN (SELECT "id" FROM "pq_pending_tasks")
     GROUP BY td."this_task"
-    HAVING ARRAY_AGG(td."depends_on_task") <@ ARRAY_AGG((SELECT "task_id" FROM "pq_tasks_status" WHERE "completed" = TRUE))
+    HAVING ARRAY_AGG(td."depends_on_task") <@ (SELECT ARRAY_AGG("task_id") FROM "pq_tasks_status" WHERE "completed" = TRUE)
 )
 INSERT INTO "player_quest_tasks" ("player_id", "player_quest_id", "task_id")
 SELECT $2, pq2."id", trs."id"
@@ -76,11 +81,14 @@ WITH "completion_list" AS (
 	SELECT (pqt."completed_at" IS NOT NULL) AS "completed"
 	FROM "tasks" t
 	LEFT JOIN "player_quest_tasks" pqt ON t.id = pqt."task_id" AND pqt."player_id" = $2
-	WHERE t."quest_id" = $1
+	WHERE t."quest_id" = $1 AND t."required_for_completion" = TRUE
 )
 UPDATE "player_quests"
-SET "completed_at" = NOW()
+SET
+    "updated_at" = NOW(),
+    "completed_at" = NOW()
 WHERE 
 	"player_quests"."player_id" = $2 AND
 	"player_quests"."quest_id" = $1 AND 
+	"player_quests"."completed_at" IS NULL AND 
 	TRUE = ALL((SELECT "completed" FROM "completion_list"));

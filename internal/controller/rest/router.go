@@ -93,6 +93,7 @@ func App(config Config) *fiber.App {
 	playerQuests := quests.Group("/:questId/players", buildGetQuestMiddleware(config.CacheSorage, config.CacheMiddlewareExpiration, config.GetQuestByIDAndGameIDFunc))
 	playerQuests.Post("/:playerId", buildStartPlayerQuestHandler(config.StartQuestForPlayerFunc))
 	playerQuests.Get("/:playerId", buildGetPlayerQuestProgressionHandler(config.GetPlayerQuestProgressionFunc))
+	playerQuests.Patch("/:playerId", buildUpdatePlayerQuestProgressionHandler(config.UpdatePlayerQuestProgressionFunc))
 
 	// Statistic
 	statistics := api.Group("/statistics")

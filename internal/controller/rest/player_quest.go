@@ -9,6 +9,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+type UpdatePlayerQuestProgressionReq struct {
+	Data string `json:"data"` // Data to apply the JsonLogic
+}
+
 type (
 	PlayerQuestTaskProgression struct {
 		StartedAt   time.Time  `json:"startedAt"`             // Time the player started the task
@@ -101,6 +105,38 @@ func buildGetPlayerQuestProgressionHandler(getPlayerQuestProgressionFunc quest.G
 		)
 
 		progression, err := getPlayerQuestProgressionFunc(c.Context(), quest, playerID)
+		if err != nil {
+			return err
+		}
+
+		return c.Status(http.StatusOK).JSON(playerQuestProgressionFromDomain(progression))
+	}
+}
+
+// @summary Update Player Quest Progression
+// @description Updates a player's quest progression
+// @router /api/v1/quests/{questId}/players/{playerId} [PATCH]
+// @accept json
+// @produce json
+// @param X-Game-ID header string true "Game ID responsible for the quest"
+// @param questId path string true "Quest ID"
+// @param playerId path string true "Player ID"
+// @param ProgressData body UpdatePlayerQuestProgressionReq true "Player data to check"
+// @success 200 {object} PlayerQuestProgression
+// @failure 404,422,500 {object} ErrorResponse
+func buildUpdatePlayerQuestProgressionHandler(updatePlayerQuestProgressionFunc quest.UpdatePlayerQuestProgressionFunc) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var (
+			quest    = c.Locals("quest").(quest.Quest)
+			playerID = c.Params("playerId")
+		)
+
+		var body UpdatePlayerQuestProgressionReq
+		if err := c.BodyParser(&body); err != nil {
+			return err
+		}
+
+		progression, err := updatePlayerQuestProgressionFunc(c.Context(), quest, playerID, body.Data)
 		if err != nil {
 			return err
 		}
