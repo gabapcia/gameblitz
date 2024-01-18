@@ -9,7 +9,6 @@ import (
 var (
 	ErrPlayerAlreadyStartedTheQuest = errors.New("player already started the quest")
 	ErrPlayerNotStartedTheQuest     = errors.New("player not started the quest")
-	ErrPlayerQuestTaskNotRegistered = errors.New("player not registered to the task")
 	ErrPlayerQuestAlreadyCompleted  = errors.New("player already concluded the quest")
 )
 
@@ -64,13 +63,14 @@ func BuildGetPlayerQuestProgression(storageGetPlayerQuestProgressionFunc Storage
 }
 
 func BuildUpdatePlayerQuestProgressionFunc(
+	notifierPlayerProgressionUpdates NotifierPlayerProgressionUpdates,
 	storageGetPlayerQuestProgressionFunc StorageGetPlayerQuestProgressionFunc,
 	storageUpdatePlayerQuestProgressionFunc StorageUpdatePlayerQuestProgressionFunc,
 ) UpdatePlayerQuestProgressionFunc {
 	return func(ctx context.Context, quest Quest, playerID, taskDataToCheck string) (PlayerQuestProgression, error) {
 		previousProgression, err := storageGetPlayerQuestProgressionFunc(ctx, quest, playerID)
 		if err != nil {
-			return PlayerQuestProgression{}, nil
+			return PlayerQuestProgression{}, err
 		}
 
 		if !previousProgression.CompletedAt.IsZero() {
@@ -88,7 +88,11 @@ func BuildUpdatePlayerQuestProgressionFunc(
 
 		playerProgression, err := storageUpdatePlayerQuestProgressionFunc(ctx, quest, tasksCompleted, playerID)
 		if err != nil {
-			return PlayerQuestProgression{}, nil
+			return PlayerQuestProgression{}, err
+		}
+
+		if err = notifierPlayerProgressionUpdates(ctx, playerProgression); err != nil {
+			return PlayerQuestProgression{}, err
 		}
 
 		return playerProgression, nil
