@@ -1,0 +1,44 @@
+#!/bin/sh
+
+SQLC="$(go env GOPATH)/bin/sqlc"
+MIGRATE="$(go env GOPATH)/bin/migrate"
+
+POSTGRESQL_DSN=${POSTGRESQL_DSN:-postgres://metagaming:metagaming@localhost:5432/metagaming?sslmode=disable}
+
+if [ ! -f $SQLC ]; then
+    go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+fi
+
+if [ ! -f $MIGRATE ]; then
+    go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+fi
+
+gen_code_from_queires() {
+	$SQLC --file internal/infra/storage/postgres/internal/sqlc.yaml generate
+}
+
+create_migration() {
+	read -p 'Migration name: ' MIGRATION_NAME
+    echo "Test: $MIGRATION_NAME"
+    $MIGRATE create -ext sql -dir internal/infra/storage/postgres/internal/migrations -seq $MIGRATION_NAME
+}
+
+apply_migration() {
+	$MIGRATE -path internal/infra/storage/postgres/internal/migrations -database "$POSTGRESQL_DSN" up
+}
+
+case $1 in
+    "--gen-queries")
+        gen_code_from_queires
+        ;;
+    "--create-migration")
+        create_migration
+        ;;
+    "--apply-migration")
+        apply_migration
+        ;;
+    *)
+        echo 'Invalid subcommand'
+        exit 1
+        ;;
+esac

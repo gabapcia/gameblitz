@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+SWAG="$(go env GOPATH)/bin/swag"
+
+if [ ! -f $SWAG ]; then
+    go install github.com/swaggo/swag/cmd/swag@latest
+fi
+
+$SWAG init --dir internal/controller/rest --output internal/controller/rest/docs --generalInfo router.go
