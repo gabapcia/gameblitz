@@ -2,11 +2,13 @@ package postgres
 
 import (
 	"context"
+	"errors"
 
 	"github.com/gabarcia/metagaming-api/internal/infra/storage/postgres/internal/sqlc"
 	"github.com/gabarcia/metagaming-api/internal/quest"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 func sqcStartQuestForPlayerDataToDomain(pq sqlc.PlayerQuest, q quest.Quest, ts []sqlc.StartPlayerTasksForQuestRow) quest.PlayerQuestProgression {
@@ -70,6 +72,10 @@ func (c connection) StartQuestForPlayer(ctx context.Context, q quest.Quest, play
 		QuestID:  questID,
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = quest.ErrQuestNotFound
+		}
+
 		return quest.PlayerQuestProgression{}, err
 	}
 
@@ -96,6 +102,10 @@ func (c connection) GetPlayerQuestProgression(ctx context.Context, q quest.Quest
 		QuestID:  questID,
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = quest.ErrQuestNotFound
+		}
+
 		return quest.PlayerQuestProgression{}, err
 	}
 
