@@ -19,7 +19,6 @@ gen_code_from_queires() {
 
 create_migration() {
 	read -p 'Migration name: ' MIGRATION_NAME
-    echo "Test: $MIGRATION_NAME"
     $MIGRATE create -ext sql -dir internal/infra/storage/postgres/internal/migrations -seq $MIGRATION_NAME
 }
 
