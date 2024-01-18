@@ -50,6 +50,12 @@ func buildErrorHandler() fiber.ErrorHandler {
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalidID)
 		case errors.Is(err, quest.ErrQuestNotFound):
 			return c.Status(http.StatusNotFound).JSON(ErrorResponseQuestNotFound)
+		case errors.Is(err, quest.ErrPlayerAlreadyStartedTheQuest):
+			return c.Status(http.StatusConflict).JSON(ErrorResponsePlayerAlreadyStartedTheQuest)
+		case errors.Is(err, quest.ErrPlayerNotStartedTheQuest):
+			return c.Status(http.StatusNotFound).JSON(ErrorResponsePlayerNotStartedTheQuest)
+		case errors.Is(err, quest.ErrPlayerQuestAlreadyCompleted):
+			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponsePlayerQuestAlreadyFinished)
 		case errors.Is(err, quest.ErrQuestValidationError):
 			validationErrorMessages := strings.Split(err.Error(), "\n")
 			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalid.withDetails(validationErrorMessages...))

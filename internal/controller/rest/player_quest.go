@@ -63,6 +63,12 @@ func playerQuestProgressionFromDomain(p quest.PlayerQuestProgression) PlayerQues
 	}
 }
 
+var (
+	ErrorResponsePlayerAlreadyStartedTheQuest = ErrorResponse{Code: "6.0", Message: "Player already started the quest"}
+	ErrorResponsePlayerNotStartedTheQuest     = ErrorResponse{Code: "6.1", Message: "Player not started the quest"}
+	ErrorResponsePlayerQuestAlreadyFinished   = ErrorResponse{Code: "6.2", Message: "Player already finished the quest"}
+)
+
 // @summary Start Player Quest Progression
 // @description Start a player's quest progression
 // @router /api/v1/quests/{questId}/players/{playerId} [POST]
@@ -71,7 +77,7 @@ func playerQuestProgressionFromDomain(p quest.PlayerQuestProgression) PlayerQues
 // @param questId path string true "Quest ID"
 // @param playerId path string true "Player ID"
 // @success 201 {object} PlayerQuestProgression
-// @failure 404,422,500 {object} ErrorResponse
+// @failure 404,409,422,500 {object} ErrorResponse
 func buildStartPlayerQuestHandler(startQuestForPlayerFunc quest.StartQuestForPlayerFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
