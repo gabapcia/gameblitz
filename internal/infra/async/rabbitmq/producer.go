@@ -30,6 +30,10 @@ func (p producer) ensureExchanges(ctx context.Context) error {
 		return fmt.Errorf("Statistic Exchange: %w", err)
 	}
 
+	if err := p.ensureQuestExchange(ctx); err != nil {
+		return fmt.Errorf("Quest Exchange: %w", err)
+	}
+
 	return nil
 }
 

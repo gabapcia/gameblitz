@@ -96,14 +96,14 @@ func main() {
 
 		StartQuestForPlayerFunc:          quest.BuildStartQuestForPlayerFunc(postgres.StartQuestForPlayer),
 		GetPlayerQuestProgressionFunc:    quest.BuildGetPlayerQuestProgression(postgres.GetPlayerQuestProgression),
-		UpdatePlayerQuestProgressionFunc: quest.BuildUpdatePlayerQuestProgressionFunc(postgres.GetPlayerQuestProgression, postgres.UpdatePlayerQuestProgression),
+		UpdatePlayerQuestProgressionFunc: quest.BuildUpdatePlayerQuestProgressionFunc(rabbitmq.PlayerQuestProgressionUpdates, postgres.GetPlayerQuestProgression, postgres.UpdatePlayerQuestProgression),
 
 		// Statistic
 		CreateStatisticFunc:                  statistic.BuildCreateStatisticFunc(mongo.CreateStatistic),
 		GetStatisticByIDAndGameIDFunc:        statistic.BuildGetStatisticByIDAndGameID(mongo.GetStatisticByIDAndGameID),
 		SoftDeleteStatisticByIDAndGameIDFunc: statistic.BuildSoftDeleteStatistic(mongo.SoftDeleteStatistic),
 
-		UpsertPlayerStatisticProgressionFunc: statistic.BuildUpsertPlayerProgressionFunc(rabbitmq.PlayerProgressionUpdates, mongo.UpdatePlayerStatisticProgression),
+		UpsertPlayerStatisticProgressionFunc: statistic.BuildUpsertPlayerProgressionFunc(rabbitmq.PlayerStatisticProgressionUpdates, mongo.UpdatePlayerStatisticProgression),
 		GetPlayerStatisticProgressionFunc:    statistic.BuildGetPlayerProgression(mongo.GetPlayerProgression),
 	}
 	if err := rest.Execute(restConfig); err != nil {

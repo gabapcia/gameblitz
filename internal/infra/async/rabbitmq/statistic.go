@@ -105,7 +105,7 @@ func (p producer) ensureStatisticExchange(ctx context.Context) error {
 	return p.declareExchange(ctx, statisticExchange)
 }
 
-func (p producer) PlayerProgressionUpdates(ctx context.Context, st statistic.Statistic, progression statistic.PlayerProgression, updates statistic.PlayerProgressionUpdates) error {
+func (p producer) PlayerStatisticProgressionUpdates(ctx context.Context, st statistic.Statistic, progression statistic.PlayerProgression, updates statistic.PlayerProgressionUpdates) error {
 	var (
 		routingKey = buildStatisticRoutingKey(st.GameID, st.ID)
 		mandatory  = false
