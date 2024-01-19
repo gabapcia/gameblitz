@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
+	"github.com/gabarcia/game-blitz/internal/infra/logger/zap"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"

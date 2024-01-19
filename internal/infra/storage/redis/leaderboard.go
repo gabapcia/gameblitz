@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+	"github.com/gabarcia/game-blitz/internal/leaderboard"
 	"github.com/google/uuid"
 )
 

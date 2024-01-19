@@ -1,9 +1,9 @@
 
-## Metagaming API Documentation
+## Game Blitz API Documentation
 
 ### Overview
 
-The Metagaming API is designed to manage basic gaming features such as Statistics, Quests, and Leaderboards. It is implemented using Golang version 1.21 and provides a robust set of endpoints for creating, retrieving, updating, and deleting game-related data.
+The Game Blitz API is designed to manage basic gaming features such as Statistics, Quests, and Leaderboards. It is implemented using Golang version 1.21 and provides a robust set of endpoints for creating, retrieving, updating, and deleting game-related data.
 
 ### Features
 
@@ -20,12 +20,12 @@ The Metagaming API is designed to manage basic gaming features such as Statistic
 
 1. Clone the repository:
 ```bash
-git clone github.com/gabarcia/metagaming-api
+git clone github.com/gabarcia/game-blitz
 ```
 
 2. Navigate to the project directory:
 ```bash
-cd metagaming-api
+cd game-blitz
 ```
 
 ### Configuration
@@ -52,8 +52,8 @@ export RABBITMQ_URI=[rabbitmq_uri] # RabbitMQ connection string, exemple: amqp:/
 Build and start the application:
 
 ```bash
-go build -o metagaming-api cmd/main.go
-./metagaming-api
+go build -o game-blitz cmd/main.go
+./game-blitz
 ```
 
 To explore the API, navigate to the `/docs` endpoint where the Swagger documentation is available.

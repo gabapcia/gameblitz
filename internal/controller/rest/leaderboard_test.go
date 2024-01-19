@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
-	"github.com/gabarcia/metagaming-api/internal/leaderboard"
+	"github.com/gabarcia/game-blitz/internal/infra/logger/zap"
+	"github.com/gabarcia/game-blitz/internal/leaderboard"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"

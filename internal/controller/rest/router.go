@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gabarcia/metagaming-api/internal/leaderboard"
-	"github.com/gabarcia/metagaming-api/internal/quest"
-	"github.com/gabarcia/metagaming-api/internal/statistic"
+	"github.com/gabarcia/game-blitz/internal/leaderboard"
+	"github.com/gabarcia/game-blitz/internal/quest"
+	"github.com/gabarcia/game-blitz/internal/statistic"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/swagger"
 
-	_ "github.com/gabarcia/metagaming-api/internal/controller/rest/docs"
+	_ "github.com/gabarcia/game-blitz/internal/controller/rest/docs"
 )
 
 const (

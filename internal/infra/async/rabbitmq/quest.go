@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gabarcia/metagaming-api/internal/quest"
+	"github.com/gabarcia/game-blitz/internal/quest"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )

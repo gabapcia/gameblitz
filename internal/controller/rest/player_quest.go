@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gabarcia/metagaming-api/internal/quest"
+	"github.com/gabarcia/game-blitz/internal/quest"
 
 	"github.com/gofiber/fiber/v2"
 )

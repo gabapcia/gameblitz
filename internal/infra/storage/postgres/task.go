@@ -3,8 +3,8 @@ package postgres
 import (
 	"context"
 
-	"github.com/gabarcia/metagaming-api/internal/infra/storage/postgres/internal/sqlc"
-	"github.com/gabarcia/metagaming-api/internal/quest"
+	"github.com/gabarcia/game-blitz/internal/infra/storage/postgres/internal/sqlc"
+	"github.com/gabarcia/game-blitz/internal/quest"
 
 	"github.com/google/uuid"
 )

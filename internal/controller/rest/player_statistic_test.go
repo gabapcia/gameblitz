@@ -10,9 +10,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
-	"github.com/gabarcia/metagaming-api/internal/leaderboard"
-	"github.com/gabarcia/metagaming-api/internal/statistic"
+	"github.com/gabarcia/game-blitz/internal/infra/logger/zap"
+	"github.com/gabarcia/game-blitz/internal/leaderboard"
+	"github.com/gabarcia/game-blitz/internal/statistic"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )

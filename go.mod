@@ -1,4 +1,4 @@
-module github.com/gabarcia/metagaming-api
+module github.com/gabarcia/game-blitz
 
 go 1.21
 

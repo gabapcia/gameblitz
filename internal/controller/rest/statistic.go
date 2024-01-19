@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
-	"github.com/gabarcia/metagaming-api/internal/statistic"
+	"github.com/gabarcia/game-blitz/internal/infra/logger/zap"
+	"github.com/gabarcia/game-blitz/internal/statistic"
 
 	"github.com/gofiber/fiber/v2"
 )

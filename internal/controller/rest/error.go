@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gabarcia/metagaming-api/internal/infra/logger/zap"
-	"github.com/gabarcia/metagaming-api/internal/leaderboard"
-	"github.com/gabarcia/metagaming-api/internal/quest"
-	"github.com/gabarcia/metagaming-api/internal/statistic"
+	"github.com/gabarcia/game-blitz/internal/infra/logger/zap"
+	"github.com/gabarcia/game-blitz/internal/leaderboard"
+	"github.com/gabarcia/game-blitz/internal/quest"
+	"github.com/gabarcia/game-blitz/internal/statistic"
 
 	"github.com/gofiber/fiber/v2"
 )
