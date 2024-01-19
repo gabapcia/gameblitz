@@ -56,7 +56,7 @@ type Config struct {
 // @title Metagaming API
 // @version 1.0
 // @license.name MIT
-// @description An API to handle basic gaming features like Quests and Leaderboards
+// @description An API to handle basic gaming features like Statistics, Quests and Leaderboards
 // @BasePath /
 func App(config Config) *fiber.App {
 	app := fiber.New(fiber.Config{

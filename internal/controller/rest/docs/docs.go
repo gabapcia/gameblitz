@@ -1442,7 +1442,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Metagaming API",
-	Description:      "An API to handle basic gaming features like Quests and Leaderboards",
+	Description:      "An API to handle basic gaming features like Statistics, Quests and Leaderboards",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

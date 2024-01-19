@@ -363,7 +363,8 @@ definitions:
     type: object
 info:
   contact: {}
-  description: An API to handle basic gaming features like Quests and Leaderboards
+  description: An API to handle basic gaming features like Statistics, Quests and
+    Leaderboards
   license:
     name: MIT
   title: Metagaming API

@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "An API to handle basic gaming features like Quests and Leaderboards",
+        "description": "An API to handle basic gaming features like Statistics, Quests and Leaderboards",
         "title": "Metagaming API",
         "contact": {},
         "license": {
