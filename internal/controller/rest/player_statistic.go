@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gabarcia/game-blitz/internal/statistic"
+	"github.com/gabarcia/gameblitz/internal/statistic"
 
 	"github.com/gofiber/fiber/v2"
 )

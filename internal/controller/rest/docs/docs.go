@@ -1441,7 +1441,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "Metagaming API",
+	Title:            "GameBlitz API",
 	Description:      "An API to handle basic gaming features like Statistics, Quests and Leaderboards",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

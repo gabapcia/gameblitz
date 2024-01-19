@@ -367,7 +367,7 @@ info:
     Leaderboards
   license:
     name: MIT
-  title: Metagaming API
+  title: GameBlitz API
   version: "1.0"
 paths:
   /api/v1/leaderboards:

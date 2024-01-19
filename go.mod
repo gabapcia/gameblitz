@@ -1,4 +1,4 @@
-module github.com/gabarcia/game-blitz
+module github.com/gabarcia/gameblitz
 
 go 1.21
 

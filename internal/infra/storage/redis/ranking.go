@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gabarcia/game-blitz/internal/leaderboard"
+	"github.com/gabarcia/gameblitz/internal/leaderboard"
 
 	"github.com/redis/go-redis/v9"
 )

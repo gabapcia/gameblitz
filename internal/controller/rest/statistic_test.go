@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gabarcia/game-blitz/internal/infra/logger/zap"
-	"github.com/gabarcia/game-blitz/internal/statistic"
+	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
+	"github.com/gabarcia/gameblitz/internal/statistic"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/google/uuid"

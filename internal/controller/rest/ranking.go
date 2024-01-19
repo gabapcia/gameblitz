@@ -3,7 +3,7 @@ package rest
 import (
 	"net/http"
 
-	"github.com/gabarcia/game-blitz/internal/leaderboard"
+	"github.com/gabarcia/gameblitz/internal/leaderboard"
 
 	"github.com/gofiber/fiber/v2"
 )

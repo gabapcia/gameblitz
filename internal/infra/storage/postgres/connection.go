@@ -3,7 +3,7 @@ package postgres
 import (
 	"context"
 
-	"github.com/gabarcia/game-blitz/internal/infra/storage/postgres/internal/sqlc"
+	"github.com/gabarcia/gameblitz/internal/infra/storage/postgres/internal/sqlc"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

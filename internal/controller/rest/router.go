@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gabarcia/game-blitz/internal/leaderboard"
-	"github.com/gabarcia/game-blitz/internal/quest"
-	"github.com/gabarcia/game-blitz/internal/statistic"
+	"github.com/gabarcia/gameblitz/internal/leaderboard"
+	"github.com/gabarcia/gameblitz/internal/quest"
+	"github.com/gabarcia/gameblitz/internal/statistic"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/swagger"
 
-	_ "github.com/gabarcia/game-blitz/internal/controller/rest/docs"
+	_ "github.com/gabarcia/gameblitz/internal/controller/rest/docs"
 )
 
 const (
@@ -53,7 +53,7 @@ type Config struct {
 	GetPlayerStatisticProgressionFunc    statistic.GetPlayerProgressionFunc
 }
 
-// @title Metagaming API
+// @title GameBlitz API
 // @version 1.0
 // @license.name MIT
 // @description An API to handle basic gaming features like Statistics, Quests and Leaderboards

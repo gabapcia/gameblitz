@@ -2,7 +2,7 @@
     "swagger": "2.0",
     "info": {
         "description": "An API to handle basic gaming features like Statistics, Quests and Leaderboards",
-        "title": "Metagaming API",
+        "title": "GameBlitz API",
         "contact": {},
         "license": {
             "name": "MIT"

@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gabarcia/game-blitz/internal/quest"
+	"github.com/gabarcia/gameblitz/internal/quest"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-const questExchange = "metagaming.quest"
+const questExchange = "gameblitz.quest"
 
 type (
 	TaskMessage struct {

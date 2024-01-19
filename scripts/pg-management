@@ -3,7 +3,7 @@
 SQLC="$(go env GOPATH)/bin/sqlc"
 MIGRATE="$(go env GOPATH)/bin/migrate"
 
-POSTGRESQL_DSN=${POSTGRESQL_DSN:-postgres://metagaming:metagaming@localhost:5432/metagaming?sslmode=disable}
+POSTGRESQL_DSN=${POSTGRESQL_DSN:-postgres://gameblitz:gameblitz@localhost:5432/gameblitz?sslmode=disable}
 
 if [ ! -f $SQLC ]; then
     go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest

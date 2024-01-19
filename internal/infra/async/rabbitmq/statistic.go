@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gabarcia/game-blitz/internal/statistic"
+	"github.com/gabarcia/gameblitz/internal/statistic"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-const statisticExchange = "metagaming.statistic"
+const statisticExchange = "gameblitz.statistic"
 
 type (
 	PlayerStatisticLandmarksUpdatesMessage struct {

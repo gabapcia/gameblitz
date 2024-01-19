@@ -1,15 +1,24 @@
 version: '3.8'
 
 services:
+  # Auth
+  keycloack:
+    image: quay.io/keycloak/keycloak:latest
+    ports:
+      - 8080:8080
+    environment:
+      KEYCLOAK_ADMIN: gameblitz
+      KEYCLOAK_ADMIN_PASSWORD: gameblitz
+
   # Databases
   postgres:
     image: postgres:16-alpine
     ports:
       - 5432:5432
     environment:
-      POSTGRES_DB: metagaming
-      POSTGRES_USER: metagaming
-      POSTGRES_PASSWORD: metagaming
+      POSTGRES_DB: gameblitz
+      POSTGRES_USER: gameblitz
+      POSTGRES_PASSWORD: gameblitz
   mongo:
     image: mongo:7
     ports:
@@ -32,6 +41,6 @@ services:
       - 5672:5672
       - 15672:15672
     environment:
-      RABBITMQ_DEFAULT_USER: metagaming
-      RABBITMQ_DEFAULT_PASS: metagaming
-      RABBITMQ_DEFAULT_VHOST: metagaming
+      RABBITMQ_DEFAULT_USER: gameblitz
+      RABBITMQ_DEFAULT_PASS: gameblitz
+      RABBITMQ_DEFAULT_VHOST: gameblitz
