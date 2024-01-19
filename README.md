@@ -52,7 +52,7 @@ export RABBITMQ_URI=[rabbitmq_uri] # RabbitMQ connection string, exemple: amqp:/
 Build and start the application:
 
 ```bash
-go build -o game-blitz cmd/main.go
+go build -o game-blitz cmd/api/main.go
 ./game-blitz
 ```
 
