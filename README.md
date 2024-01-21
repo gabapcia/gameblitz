@@ -34,6 +34,7 @@ Before running the application, set the required environment variables:
 
 ```bash
 export PORT=[port] # API Port to listen to, exemple: 8080
+export KEYCLOACK_CERTS_URI=[keycloack_crests_uri] # Keycloack certs uri, exemple: http://localhost:3000/realms/gameblitz/protocol/openid-connect/certs
 export POSTGRESQL_DSN=[postgresql_dsn] # PostgreSQL connection string, exemple: postgres://gameblitz:gameblitz@localhost:5432/gameblitz?sslmode=disable
 export MONGO_URI=[mongo_uri] # MongoDB connection string, exemple: mongodb://localhost:27017/?retryWrites=true&w=majority
 export MONGO_DB=[mongo_db] # MongoDB database name, exemple: gameblitz
