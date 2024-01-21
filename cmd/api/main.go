@@ -4,10 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/gabarcia/gameblitz/internal/auth"
 	"github.com/gabarcia/gameblitz/internal/controller/rest"
 	"github.com/gabarcia/gameblitz/internal/infra/async/rabbitmq"
 	"github.com/gabarcia/gameblitz/internal/infra/cache/memcached"
 	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
+	"github.com/gabarcia/gameblitz/internal/infra/service/keycloack"
 	"github.com/gabarcia/gameblitz/internal/infra/storage/mongo"
 	"github.com/gabarcia/gameblitz/internal/infra/storage/postgres"
 	"github.com/gabarcia/gameblitz/internal/infra/storage/redis"
@@ -20,6 +22,8 @@ import (
 
 type Config struct {
 	Port int `envconfig:"PORT" required:"true"`
+
+	KeycloackCertsURI string `envconfig:"KEYCLOACK_CERTS_URI" required:"true"`
 
 	PotgresDSN string `envconfig:"POSTGRESQL_DSN" required:"true"`
 
@@ -49,6 +53,11 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	keycloack, err := keycloack.New(ctx, config.KeycloackCertsURI)
+	if err != nil {
+		zap.Panic(err, "keycloack startup failed")
+	}
 
 	redis := redis.New(ctx, config.RedisAddr, config.RedisUsername, config.RedisPassword, config.RedisDB)
 	defer redis.Close()
@@ -80,6 +89,9 @@ func main() {
 		CacheSorage:               memcached,
 		CacheExpiration:           time.Duration(config.MemcachedCacheExpiration) * time.Second,
 		CacheMiddlewareExpiration: time.Duration(config.MemcachedCacheMiddlewareExpiration) * time.Second,
+
+		// Auth
+		AuthenticateFunc: auth.BuildAuthenticatorFunc(keycloack.Authenticate),
 
 		// Leaderboard
 		CreateLeaderboardFunc:              leaderboard.BuildCreateFunc(redis.CreateLeaderboard),
