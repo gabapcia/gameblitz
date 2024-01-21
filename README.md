@@ -32,21 +32,22 @@ cd game-blitz
 
 Before running the application, set the required environment variables:
 
-```bash
-export PORT=[port] # API Port to listen to, exemple: 8080
-export KEYCLOACK_CERTS_URI=[keycloack_crests_uri] # Keycloack certs uri, exemple: http://localhost:3000/realms/gameblitz/protocol/openid-connect/certs
-export POSTGRESQL_DSN=[postgresql_dsn] # PostgreSQL connection string, exemple: postgres://gameblitz:gameblitz@localhost:5432/gameblitz?sslmode=disable
-export MONGO_URI=[mongo_uri] # MongoDB connection string, exemple: mongodb://localhost:27017/?retryWrites=true&w=majority
-export MONGO_DB=[mongo_db] # MongoDB database name, exemple: gameblitz
-export REDIS_ADDR=[redis_addr] # Redis address, exemple: localhost:6379
-export REDIS_USERNAME=[redis_username] # Redis username, default: empty
-export REDIS_PASSWORD=[redis_password] # Redis password, default: empty
-export REDIS_DB=[redis_db] # Redis database, default: 0
-export MEMCACHED_CONN_STR=[memcached_conn_str] # Memcached connection string
-export MEMCACHED_EXPIRATION=[memcached_expiration] # Cache expiration in seconds for the GET endpoint, default: 60
-export MEMCACHED_MIDDLEWARE_EXPIRATION=[memcached_middleware_expiration] # Cache expiration in seconds for the Middlewares, default: 60
-export RABBITMQ_URI=[rabbitmq_uri] # RabbitMQ connection string, exemple: amqp://gameblitz:gameblitz@localhost:5672/gameblitz
-```
+| Variable                         | Description                                      | Type    | Required | Example                                                                   |
+|----------------------------------|--------------------------------------------------|---------|----------|---------------------------------------------------------------------------|
+| `PORT`                           | API Port to listen to                            | Integer | Yes      | `8080`                                                                    |
+| `KEYCLOACK_CERTS_URI`            | Keycloack certs URI                              | String  | Yes      | `http://localhost:3000/realms/gameblitz/protocol/openid-connect/certs`    |
+| `POSTGRESQL_DSN`                 | PostgreSQL connection string                     | String  | Yes      | `postgres://gameblitz:gameblitz@localhost:5432/gameblitz?sslmode=disable` |
+| `MONGO_URI`                      | MongoDB connection string                        | String  | Yes      | `mongodb://localhost:27017/?retryWrites=true&w=majority`                  |
+| `MONGO_DB`                       | MongoDB database name                            | String  | Yes      | `gameblitz`                                                               |
+| `REDIS_ADDR`                     | Redis address                                    | String  | Yes      | `localhost:6379`                                                          |
+| `REDIS_USERNAME`                 | Redis username                                   | String  | No       | `gameblitz`                                                               |
+| `REDIS_PASSWORD`                 | Redis password                                   | String  | No       | `gameblitz`                                                               |
+| `REDIS_DB`                       | Redis database                                   | Integer | No       | `0`                                                                       |
+| `MEMCACHED_CONN_STR`             | Memcached connection string                      | String  | Yes      | `localhost:11211`                                                         |
+| `MEMCACHED_EXPIRATION`           | Cache expiration in seconds for the GET endpoint | Integer | No       | `60`                                                                      |
+| `MEMCACHED_MIDDLEWARE_EXPIRATION`| Cache expiration in seconds for the Middlewares  | Integer | No       | `60`                                                                      |
+| `RABBITMQ_URI`                   | RabbitMQ connection string                       | String  | Yes      | `amqp://gameblitz:gameblitz@localhost:5672/gameblitz`                     |
+
 
 ### Running the Application
 
