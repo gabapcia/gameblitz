@@ -37,7 +37,7 @@ var (
 // @router /api/v1/leaderboards/{leaderboardId}/ranking/{playerId} [POST]
 // @accept json
 // @produce json
-// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param Authorization header string true "Game's JWT authorization"
 // @param leaderboardId path string true "Leaderboard ID"
 // @param playerId path string true "Player ID"
 // @param UpsertPlayerRankData body UpsertPlayerRankReq true "Values to update the player rank"
@@ -67,7 +67,7 @@ func buildUpsertPlayerRankHandler(upsertPlayerRankFunc leaderboard.UpsertPlayerR
 // @description Get the leaderboard ranking paginated
 // @router /api/v1/leaderboards/{leaderboardId}/ranking [GET]
 // @produce json
-// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param Authorization header string true "Game's JWT authorization"
 // @param leaderboardId path string true "Leaderboard ID"
 // @param page query int false "Page number" minimun(0) default(0)
 // @param limit query int false "Number of rankings per page" minimun(1) maximum(500) default(10)

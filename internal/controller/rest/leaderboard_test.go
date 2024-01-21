@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gabarcia/gameblitz/internal/auth"
 	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
 	"github.com/gabarcia/gameblitz/internal/leaderboard"
 
@@ -26,19 +27,22 @@ func TestBuildGetLeaderboardMiddleware(t *testing.T) {
 	)
 
 	t.Run("OK", func(t *testing.T) {
+		authMiddleware := buildAuthMiddleware(func(ctx context.Context, credentials string) (auth.Claims, error) {
+			return auth.Claims{GameID: gameID}, nil
+		})
 		getLeaderboardMiddleware := buildGetLeaderboardMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 			return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 		})
 
 		app := fiber.New()
-		app.Get("/:leaderboardId", getLeaderboardMiddleware, func(c *fiber.Ctx) error {
+		app.Get("/:leaderboardId", authMiddleware, getLeaderboardMiddleware, func(c *fiber.Ctx) error {
 			leaderboard := c.Locals("leaderboard")
 			return c.Status(http.StatusOK).JSON(leaderboard)
 		})
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", leaderboardID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -52,45 +56,23 @@ func TestBuildGetLeaderboardMiddleware(t *testing.T) {
 		assert.Equal(t, gameID, body.GameID)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		getLeaderboardMiddleware := buildGetLeaderboardMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
-			return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
-		})
-
-		app := fiber.New()
-		app.Get("/:leaderboardId", getLeaderboardMiddleware, func(c *fiber.Ctx) error {
-			leaderboard := c.Locals("leaderboard")
-			return c.Status(http.StatusOK).JSON(leaderboard)
-		})
-
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", leaderboardID), nil)
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var body ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&body)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseLeaderboardInvalidGameID.Code, body.Code)
-		assert.Equal(t, ErrorResponseLeaderboardInvalidGameID.Message, body.Message)
-	})
-
 	t.Run("Leaderboard Not Found", func(t *testing.T) {
+		authMiddleware := buildAuthMiddleware(func(ctx context.Context, credentials string) (auth.Claims, error) {
+			return auth.Claims{GameID: gameID}, nil
+		})
 		getLeaderboardMiddleware := buildGetLeaderboardMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 			return leaderboard.Leaderboard{}, leaderboard.ErrLeaderboardNotFound
 		})
 
 		app := fiber.New(fiber.Config{ErrorHandler: buildErrorHandler()})
-		app.Get("/:leaderboardId", getLeaderboardMiddleware, func(c *fiber.Ctx) error {
+		app.Get("/:leaderboardId", authMiddleware, getLeaderboardMiddleware, func(c *fiber.Ctx) error {
 			leaderboard := c.Locals("leaderboard")
 			return c.Status(http.StatusOK).JSON(leaderboard)
 		})
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", leaderboardID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -118,6 +100,9 @@ func TestBuildCreateLeaderboardHandler(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			CreateLeaderboardFunc: leaderboard.BuildCreateFunc(func(ctx context.Context, data leaderboard.NewLeaderboardData) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{
 					ID:              uuid.NewString(),
@@ -145,7 +130,7 @@ func TestBuildCreateLeaderboardHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/leaderboards", bytes.NewBuffer(reqBody))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -169,6 +154,9 @@ func TestBuildCreateLeaderboardHandler(t *testing.T) {
 
 	t.Run("Validation Error", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			CreateLeaderboardFunc: leaderboard.BuildCreateFunc(func(ctx context.Context, data leaderboard.NewLeaderboardData) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{}, nil
 			}),
@@ -177,7 +165,7 @@ func TestBuildCreateLeaderboardHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/leaderboards", bytes.NewBufferString(`{}`))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -196,6 +184,9 @@ func TestBuildCreateLeaderboardHandler(t *testing.T) {
 
 	t.Run("Invalid Request Body", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			CreateLeaderboardFunc: leaderboard.BuildCreateFunc(func(ctx context.Context, data leaderboard.NewLeaderboardData) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: uuid.NewString()}, nil
 			}),
@@ -204,7 +195,7 @@ func TestBuildCreateLeaderboardHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/leaderboards", bytes.NewBufferString(`{`))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -225,6 +216,9 @@ func TestBuildCreateLeaderboardHandler(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			CreateLeaderboardFunc: leaderboard.BuildCreateFunc(func(ctx context.Context, data leaderboard.NewLeaderboardData) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{}, errors.New("any error")
 			}),
@@ -243,7 +237,7 @@ func TestBuildCreateLeaderboardHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/leaderboards", bytes.NewBuffer(reqBody))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -269,6 +263,9 @@ func TestBuildGetLeaderboardHandler(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: expectedGameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: leaderboard.BuildGetByIDAndGameIDFunc(func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			}),
@@ -276,7 +273,7 @@ func TestBuildGetLeaderboardHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/leaderboards/%s", expectedID), nil)
 
-		req.Header.Set(gameIDHeader, expectedGameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -292,31 +289,11 @@ func TestBuildGetLeaderboardHandler(t *testing.T) {
 		assert.Equal(t, expectedGameID, data.GameID)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		app := App(Config{
-			GetLeaderboardByIDAndGameIDFunc: leaderboard.BuildGetByIDAndGameIDFunc(func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
-				return leaderboard.Leaderboard{}, nil
-			}),
-		})
-
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/leaderboards/%s", expectedID), nil)
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		defer resp.Body.Close()
-
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var data ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&data)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseLeaderboardInvalidGameID.Code, data.Code)
-		assert.Equal(t, ErrorResponseLeaderboardInvalidGameID.Message, data.Message)
-	})
-
 	t.Run("Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: expectedGameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: leaderboard.BuildGetByIDAndGameIDFunc(func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{}, leaderboard.ErrLeaderboardNotFound
 			}),
@@ -324,7 +301,7 @@ func TestBuildGetLeaderboardHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/leaderboards/%s", expectedID), nil)
 
-		req.Header.Set(gameIDHeader, expectedGameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -342,6 +319,9 @@ func TestBuildGetLeaderboardHandler(t *testing.T) {
 
 	t.Run("Invalid Leaderboard ID", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: expectedGameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: leaderboard.BuildGetByIDAndGameIDFunc(func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{}, leaderboard.ErrInvalidLeaderboardID
 			}),
@@ -349,7 +329,7 @@ func TestBuildGetLeaderboardHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/leaderboards/%s", expectedID), nil)
 
-		req.Header.Set(gameIDHeader, expectedGameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -366,7 +346,13 @@ func TestBuildGetLeaderboardHandler(t *testing.T) {
 	})
 
 	t.Run("Random Error", func(t *testing.T) {
+		zap.Start()
+		defer zap.Sync()
+
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: expectedGameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: leaderboard.BuildGetByIDAndGameIDFunc(func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{}, errors.New("any error")
 			}),
@@ -374,7 +360,7 @@ func TestBuildGetLeaderboardHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/leaderboards/%s", expectedID), nil)
 
-		req.Header.Set(gameIDHeader, expectedGameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -399,6 +385,9 @@ func TestBuildDeleteLeaderboardHandler(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: expectedGameID}, nil
+			},
 			DeleteLeaderboardByIDAndGameIDFunc: leaderboard.BuildSoftDeleteFunc(func(ctx context.Context, id, gameID string) error {
 				return nil
 			}),
@@ -406,7 +395,7 @@ func TestBuildDeleteLeaderboardHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/leaderboards/%s", expectedID), nil)
 
-		req.Header.Set(gameIDHeader, expectedGameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -415,31 +404,11 @@ func TestBuildDeleteLeaderboardHandler(t *testing.T) {
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		app := App(Config{
-			DeleteLeaderboardByIDAndGameIDFunc: leaderboard.BuildSoftDeleteFunc(func(ctx context.Context, id, gameID string) error {
-				return nil
-			}),
-		})
-
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/leaderboards/%s", expectedID), nil)
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		defer resp.Body.Close()
-
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var data ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&data)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseLeaderboardInvalidGameID.Code, data.Code)
-		assert.Equal(t, ErrorResponseLeaderboardInvalidGameID.Message, data.Message)
-	})
-
 	t.Run("Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: expectedGameID}, nil
+			},
 			DeleteLeaderboardByIDAndGameIDFunc: leaderboard.BuildSoftDeleteFunc(func(ctx context.Context, id, gameID string) error {
 				return leaderboard.ErrLeaderboardNotFound
 			}),
@@ -447,7 +416,7 @@ func TestBuildDeleteLeaderboardHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/leaderboards/%s", expectedID), nil)
 
-		req.Header.Set(gameIDHeader, expectedGameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -464,7 +433,13 @@ func TestBuildDeleteLeaderboardHandler(t *testing.T) {
 	})
 
 	t.Run("Random Error", func(t *testing.T) {
+		zap.Start()
+		defer zap.Sync()
+
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: expectedGameID}, nil
+			},
 			DeleteLeaderboardByIDAndGameIDFunc: leaderboard.BuildSoftDeleteFunc(func(ctx context.Context, id, gameID string) error {
 				return errors.New("any error")
 			}),
@@ -472,7 +447,7 @@ func TestBuildDeleteLeaderboardHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/leaderboards/%s", expectedID), nil)
 
-		req.Header.Set(gameIDHeader, expectedGameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)

@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gabarcia/gameblitz/internal/auth"
 	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
 	"github.com/gabarcia/gameblitz/internal/leaderboard"
 	"github.com/gabarcia/gameblitz/internal/statistic"
@@ -26,6 +27,9 @@ func TestTuildUpsertPlayerStatisticHandler(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 				return statistic.Statistic{ID: id, GameID: gameID}, nil
 			},
@@ -37,7 +41,7 @@ func TestTuildUpsertPlayerStatisticHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), bytes.NewBufferString(`{"value": 100.0}`))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -46,6 +50,9 @@ func TestTuildUpsertPlayerStatisticHandler(t *testing.T) {
 
 	t.Run("Invalid Request Body", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 				return statistic.Statistic{ID: id, GameID: gameID}, nil
 			},
@@ -54,7 +61,7 @@ func TestTuildUpsertPlayerStatisticHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), bytes.NewBufferString(`{`))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -70,6 +77,9 @@ func TestTuildUpsertPlayerStatisticHandler(t *testing.T) {
 
 	t.Run("Statistic Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 				return statistic.Statistic{}, statistic.ErrStatisticNotFound
 			},
@@ -78,7 +88,7 @@ func TestTuildUpsertPlayerStatisticHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), bytes.NewBufferString(`{"value": 100.0}`))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -92,34 +102,14 @@ func TestTuildUpsertPlayerStatisticHandler(t *testing.T) {
 		assert.Equal(t, ErrorResponseStatisticNotFound.Message, body.Message)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		app := App(Config{
-			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
-				return statistic.Statistic{ID: id, GameID: gameID}, nil
-			},
-		})
-
-		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), bytes.NewBufferString(`{"value": 100.0}`))
-
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var body ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&body)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Code, body.Code)
-		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Message, body.Message)
-	})
-
 	t.Run("Random Error", func(t *testing.T) {
 		zap.Start()
 		defer zap.Sync()
 
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 				return statistic.Statistic{ID: id, GameID: gameID}, nil
 			},
@@ -131,7 +121,7 @@ func TestTuildUpsertPlayerStatisticHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), bytes.NewBufferString(`{"value": 100.0}`))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -155,6 +145,9 @@ func TestBuildGetPlayerStatisticHandler(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 				return statistic.Statistic{ID: id, GameID: gameID}, nil
 			},
@@ -165,7 +158,7 @@ func TestBuildGetPlayerStatisticHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -179,29 +172,11 @@ func TestBuildGetPlayerStatisticHandler(t *testing.T) {
 		assert.Equal(t, playerID, data.PlayerID)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		app := App(Config{
-			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
-				return statistic.Statistic{ID: id, GameID: gameID}, nil
-			},
-		})
-
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), nil)
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var body ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&body)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Code, body.Code)
-		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Message, body.Message)
-	})
-
 	t.Run("Statistic Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 				return statistic.Statistic{}, statistic.ErrStatisticNotFound
 			},
@@ -209,7 +184,7 @@ func TestBuildGetPlayerStatisticHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -225,6 +200,9 @@ func TestBuildGetPlayerStatisticHandler(t *testing.T) {
 
 	t.Run("Player Statistic Progression Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 				return statistic.Statistic{ID: id, GameID: gameID}, nil
 			},
@@ -235,7 +213,7 @@ func TestBuildGetPlayerStatisticHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -254,6 +232,9 @@ func TestBuildGetPlayerStatisticHandler(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 				return statistic.Statistic{ID: id, GameID: gameID}, nil
 			},
@@ -264,7 +245,7 @@ func TestBuildGetPlayerStatisticHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s/players/%s", statisticID, playerID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)

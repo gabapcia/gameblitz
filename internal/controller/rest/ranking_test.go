@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gabarcia/gameblitz/internal/auth"
 	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
 	"github.com/gabarcia/gameblitz/internal/leaderboard"
 
@@ -27,6 +28,9 @@ func TestBuildUpsertPlayerRankHandler(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			},
@@ -38,7 +42,7 @@ func TestBuildUpsertPlayerRankHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/leaderboards/%s/ranking/%s", leaderboardID, playerID), bytes.NewBufferString(`{"value": 100.0}`))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -47,6 +51,9 @@ func TestBuildUpsertPlayerRankHandler(t *testing.T) {
 
 	t.Run("Invalid Request Body", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			},
@@ -55,7 +62,7 @@ func TestBuildUpsertPlayerRankHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/leaderboards/%s/ranking/%s", leaderboardID, playerID), bytes.NewBufferString(`{`))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -71,6 +78,9 @@ func TestBuildUpsertPlayerRankHandler(t *testing.T) {
 
 	t.Run("Leaderboard Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{}, leaderboard.ErrLeaderboardNotFound
 			},
@@ -79,7 +89,7 @@ func TestBuildUpsertPlayerRankHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/leaderboards/%s/ranking/%s", leaderboardID, playerID), bytes.NewBufferString(`{"value": 100.0}`))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -93,31 +103,11 @@ func TestBuildUpsertPlayerRankHandler(t *testing.T) {
 		assert.Equal(t, ErrorResponseLeaderboardNotFound.Message, body.Message)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		app := App(Config{
-			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
-				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
-			},
-		})
-
-		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/leaderboards/%s/ranking/%s", leaderboardID, playerID), bytes.NewBufferString(`{"value": 100.0}`))
-
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var body ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&body)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseLeaderboardInvalidGameID.Code, body.Code)
-		assert.Equal(t, ErrorResponseLeaderboardInvalidGameID.Message, body.Message)
-	})
-
 	t.Run("Leaderboard Closed", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			},
@@ -129,7 +119,7 @@ func TestBuildUpsertPlayerRankHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/leaderboards/%s/ranking/%s", leaderboardID, playerID), bytes.NewBufferString(`{"value": 100.0}`))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -148,6 +138,9 @@ func TestBuildUpsertPlayerRankHandler(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			},
@@ -159,7 +152,7 @@ func TestBuildUpsertPlayerRankHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/leaderboards/%s/ranking/%s", leaderboardID, playerID), bytes.NewBufferString(`{"value": 100.0}`))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -182,6 +175,9 @@ func TestBuildGetRankingHandler(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			},
@@ -202,7 +198,7 @@ func TestBuildGetRankingHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/leaderboards/%s/ranking", leaderboardID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -213,29 +209,11 @@ func TestBuildGetRankingHandler(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		app := App(Config{
-			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
-				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
-			},
-		})
-
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/leaderboards/%s/ranking", leaderboardID), nil)
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var body ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&body)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseLeaderboardInvalidGameID.Code, body.Code)
-		assert.Equal(t, ErrorResponseLeaderboardInvalidGameID.Message, body.Message)
-	})
-
 	t.Run("Leaderboard Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{}, leaderboard.ErrLeaderboardNotFound
 			},
@@ -243,7 +221,7 @@ func TestBuildGetRankingHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/leaderboards/%s/ranking", leaderboardID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -259,6 +237,9 @@ func TestBuildGetRankingHandler(t *testing.T) {
 
 	t.Run("Invalid Page Number", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			},
@@ -269,7 +250,7 @@ func TestBuildGetRankingHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/leaderboards/%s/ranking", leaderboardID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		q := req.URL.Query()
 		q.Set("page", "-1")
@@ -289,6 +270,9 @@ func TestBuildGetRankingHandler(t *testing.T) {
 
 	t.Run("Invalid Limit Number", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			},
@@ -299,7 +283,7 @@ func TestBuildGetRankingHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/leaderboards/%s/ranking", leaderboardID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		q := req.URL.Query()
 		q.Set("limit", "-1")
@@ -322,6 +306,9 @@ func TestBuildGetRankingHandler(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetLeaderboardByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (leaderboard.Leaderboard, error) {
 				return leaderboard.Leaderboard{ID: id, GameID: gameID}, nil
 			},
@@ -332,7 +319,7 @@ func TestBuildGetRankingHandler(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/leaderboards/%s/ranking", leaderboardID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)

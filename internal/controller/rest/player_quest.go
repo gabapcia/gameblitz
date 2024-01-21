@@ -73,7 +73,7 @@ var (
 // @description Start a player's quest progression
 // @router /api/v1/quests/{questId}/players/{playerId} [POST]
 // @produce json
-// @param X-Game-ID header string true "Game ID responsible for the quest"
+// @param Authorization header string true "Game's JWT authorization"
 // @param questId path string true "Quest ID"
 // @param playerId path string true "Player ID"
 // @success 201 {object} PlayerQuestProgression
@@ -98,7 +98,7 @@ func buildStartPlayerQuestHandler(startQuestForPlayerFunc quest.StartQuestForPla
 // @description Get a player's quest progression
 // @router /api/v1/quests/{questId}/players/{playerId} [GET]
 // @produce json
-// @param X-Game-ID header string true "Game ID responsible for the quest"
+// @param Authorization header string true "Game's JWT authorization"
 // @param questId path string true "Quest ID"
 // @param playerId path string true "Player ID"
 // @success 200 {object} PlayerQuestProgression
@@ -124,7 +124,7 @@ func buildGetPlayerQuestProgressionHandler(getPlayerQuestProgressionFunc quest.G
 // @router /api/v1/quests/{questId}/players/{playerId} [PATCH]
 // @accept json
 // @produce json
-// @param X-Game-ID header string true "Game ID responsible for the quest"
+// @param Authorization header string true "Game's JWT authorization"
 // @param questId path string true "Quest ID"
 // @param playerId path string true "Player ID"
 // @param ProgressData body UpdatePlayerQuestProgressionReq true "Player data to check"

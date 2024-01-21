@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gabarcia/gameblitz/internal/auth"
 	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
 	"github.com/gabarcia/gameblitz/internal/quest"
 	"github.com/gofiber/fiber/v2"
@@ -26,19 +27,22 @@ func TestBuildGetQuestMiddleware(t *testing.T) {
 	)
 
 	t.Run("OK", func(t *testing.T) {
+		authMiddleware := buildAuthMiddleware(func(ctx context.Context, credentials string) (auth.Claims, error) {
+			return auth.Claims{GameID: gameID}, nil
+		})
 		getQuestMiddleware := buildGetQuestMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 			return quest.Quest{ID: id, GameID: gameID}, nil
 		})
 
 		app := fiber.New()
-		app.Get("/:questId", getQuestMiddleware, func(c *fiber.Ctx) error {
+		app.Get("/:questId", authMiddleware, getQuestMiddleware, func(c *fiber.Ctx) error {
 			quest := c.Locals("quest")
 			return c.Status(http.StatusOK).JSON(quest)
 		})
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", questID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -52,45 +56,23 @@ func TestBuildGetQuestMiddleware(t *testing.T) {
 		assert.Equal(t, gameID, body.GameID)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		getQuestMiddleware := buildGetQuestMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (quest.Quest, error) {
-			return quest.Quest{ID: id, GameID: gameID}, nil
-		})
-
-		app := fiber.New()
-		app.Get("/:questId", getQuestMiddleware, func(c *fiber.Ctx) error {
-			quest := c.Locals("quest")
-			return c.Status(http.StatusOK).JSON(quest)
-		})
-
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", questID), nil)
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var body ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&body)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Code, body.Code)
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Message, body.Message)
-	})
-
 	t.Run("Quest Not Found", func(t *testing.T) {
+		authMiddleware := buildAuthMiddleware(func(ctx context.Context, credentials string) (auth.Claims, error) {
+			return auth.Claims{GameID: gameID}, nil
+		})
 		getQuestMiddleware := buildGetQuestMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 			return quest.Quest{}, quest.ErrQuestNotFound
 		})
 
 		app := fiber.New(fiber.Config{ErrorHandler: buildErrorHandler()})
-		app.Get("/:questId", getQuestMiddleware, func(c *fiber.Ctx) error {
+		app.Get("/:questId", authMiddleware, getQuestMiddleware, func(c *fiber.Ctx) error {
 			quest := c.Locals("quest")
 			return c.Status(http.StatusOK).JSON(quest)
 		})
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", questID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -109,6 +91,9 @@ func TestBuildCreateQuestHanlder(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		gameID := uuid.NewString()
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			CreateQuestFunc: func(ctx context.Context, data quest.NewQuestData) (quest.Quest, error) {
 				tasks := make([]quest.Task, len(data.Tasks))
 				for i := range data.Tasks {
@@ -149,7 +134,7 @@ func TestBuildCreateQuestHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/quests", bytes.NewBuffer(body))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -167,6 +152,9 @@ func TestBuildCreateQuestHanlder(t *testing.T) {
 	t.Run("Validation Error", func(t *testing.T) {
 		gameID := uuid.NewString()
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			CreateQuestFunc: quest.BuildCreateQuestFunc(nil),
 		})
 
@@ -183,7 +171,7 @@ func TestBuildCreateQuestHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/quests", bytes.NewBuffer(body))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -197,34 +185,19 @@ func TestBuildCreateQuestHanlder(t *testing.T) {
 		assert.Equal(t, ErrorResponseQuestInvalid.Message, data.Message)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		app := App(Config{})
-
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/quests", bytes.NewBufferString("{}"))
-
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var data ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&data)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Code, data.Code)
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Message, data.Message)
-	})
-
 	t.Run("Invalid Request Body", func(t *testing.T) {
 		var (
 			gameID = uuid.NewString()
-			app    = App(Config{})
-			req    = httptest.NewRequest(http.MethodPost, "/api/v1/quests", bytes.NewBufferString("{"))
+			app    = App(Config{
+				AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+					return auth.Claims{GameID: gameID}, nil
+				},
+			})
+			req = httptest.NewRequest(http.MethodPost, "/api/v1/quests", bytes.NewBufferString("{"))
 		)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -244,6 +217,9 @@ func TestBuildCreateQuestHanlder(t *testing.T) {
 
 		gameID := uuid.NewString()
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			CreateQuestFunc: func(ctx context.Context, data quest.NewQuestData) (quest.Quest, error) {
 				return quest.Quest{}, errors.New("any error")
 			},
@@ -252,7 +228,7 @@ func TestBuildCreateQuestHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/quests", bytes.NewBufferString("{}"))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -275,6 +251,9 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return quest.Quest{ID: id, GameID: gameID}, nil
 			},
@@ -283,7 +262,7 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -297,27 +276,11 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 		assert.Equal(t, gameID, data.GameID)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		app := App(Config{})
-
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
-
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var data ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&data)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Code, data.Code)
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Message, data.Message)
-	})
-
 	t.Run("Invalid Quest ID", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return quest.Quest{}, quest.ErrInvalidQuestID
 			},
@@ -326,7 +289,7 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -342,6 +305,9 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 
 	t.Run("Quest Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return quest.Quest{}, quest.ErrQuestNotFound
 			},
@@ -350,7 +316,7 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -369,6 +335,9 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return quest.Quest{}, errors.New("any error")
 			},
@@ -377,7 +346,7 @@ func TestBuildGetQuestHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -400,6 +369,9 @@ func TestBuildDeleteQuestHanlder(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			SoftDeleteQuestFunc: func(ctx context.Context, questID, gameID string) error {
 				return nil
 			},
@@ -408,7 +380,7 @@ func TestBuildDeleteQuestHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -417,6 +389,9 @@ func TestBuildDeleteQuestHanlder(t *testing.T) {
 
 	t.Run("Invalid Quest ID", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			SoftDeleteQuestFunc: func(ctx context.Context, questID, gameID string) error {
 				return quest.ErrInvalidQuestID
 			},
@@ -425,7 +400,7 @@ func TestBuildDeleteQuestHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/quests/invalid-id", nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -439,27 +414,11 @@ func TestBuildDeleteQuestHanlder(t *testing.T) {
 		assert.Equal(t, ErrorResponseQuestInvalidID.Message, data.Message)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		app := App(Config{})
-
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
-
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var data ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&data)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Code, data.Code)
-		assert.Equal(t, ErrorResponseQuestInvalidGameID.Message, data.Message)
-	})
-
 	t.Run("Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			SoftDeleteQuestFunc: func(ctx context.Context, questID, gameID string) error {
 				return quest.ErrQuestNotFound
 			},
@@ -468,7 +427,7 @@ func TestBuildDeleteQuestHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -487,6 +446,9 @@ func TestBuildDeleteQuestHanlder(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			SoftDeleteQuestFunc: func(ctx context.Context, questID, gameID string) error {
 				return errors.New("any error")
 			},
@@ -495,7 +457,7 @@ func TestBuildDeleteQuestHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/quests/%s", questID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)

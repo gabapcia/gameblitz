@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gabarcia/gameblitz/internal/auth"
 	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
 	"github.com/gabarcia/gameblitz/internal/statistic"
 	"github.com/gofiber/fiber/v2"
@@ -26,19 +27,22 @@ func TestBuildGetStatisticMiddleware(t *testing.T) {
 	)
 
 	t.Run("OK", func(t *testing.T) {
+		authMiddleware := buildAuthMiddleware(func(ctx context.Context, credentials string) (auth.Claims, error) {
+			return auth.Claims{GameID: gameID}, nil
+		})
 		getStatisticMiddleware := buildGetStatisticMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 			return statistic.Statistic{ID: id, GameID: gameID}, nil
 		})
 
 		app := fiber.New()
-		app.Get("/:statisticId", getStatisticMiddleware, func(c *fiber.Ctx) error {
+		app.Get("/:statisticId", authMiddleware, getStatisticMiddleware, func(c *fiber.Ctx) error {
 			statistic := c.Locals("statistic")
 			return c.Status(http.StatusOK).JSON(statistic)
 		})
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", leaderboardID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -52,45 +56,23 @@ func TestBuildGetStatisticMiddleware(t *testing.T) {
 		assert.Equal(t, gameID, body.GameID)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		getStatisticMiddleware := buildGetStatisticMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
-			return statistic.Statistic{ID: id, GameID: gameID}, nil
-		})
-
-		app := fiber.New()
-		app.Get("/:statisticId", getStatisticMiddleware, func(c *fiber.Ctx) error {
-			statistic := c.Locals("statistic")
-			return c.Status(http.StatusOK).JSON(statistic)
-		})
-
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", leaderboardID), nil)
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var body ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&body)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Code, body.Code)
-		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Message, body.Message)
-	})
-
 	t.Run("Leaderboard Not Found", func(t *testing.T) {
+		authMiddleware := buildAuthMiddleware(func(ctx context.Context, credentials string) (auth.Claims, error) {
+			return auth.Claims{GameID: gameID}, nil
+		})
 		getStatisticMiddleware := buildGetStatisticMiddleware(nil, time.Minute, func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 			return statistic.Statistic{}, statistic.ErrStatisticNotFound
 		})
 
 		app := fiber.New(fiber.Config{ErrorHandler: buildErrorHandler()})
-		app.Get("/:statisticId", getStatisticMiddleware, func(c *fiber.Ctx) error {
+		app.Get("/:statisticId", authMiddleware, getStatisticMiddleware, func(c *fiber.Ctx) error {
 			statistic := c.Locals("statistic")
 			return c.Status(http.StatusOK).JSON(statistic)
 		})
 
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", leaderboardID), nil)
 
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -109,6 +91,9 @@ func TestBuildCreateStatisticHanlder(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		gameID := uuid.NewString()
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			CreateStatisticFunc: func(ctx context.Context, data statistic.NewStatisticData) (statistic.Statistic, error) {
 				return statistic.Statistic{
 					ID:              uuid.NewString(),
@@ -135,7 +120,7 @@ func TestBuildCreateStatisticHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/statistics", bytes.NewBuffer(body))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -152,13 +137,16 @@ func TestBuildCreateStatisticHanlder(t *testing.T) {
 	t.Run("Validation Error", func(t *testing.T) {
 		gameID := uuid.NewString()
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			CreateStatisticFunc: statistic.BuildCreateStatisticFunc(nil),
 		})
 
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/statistics", bytes.NewBufferString("{}"))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -172,34 +160,19 @@ func TestBuildCreateStatisticHanlder(t *testing.T) {
 		assert.Equal(t, ErrorResponseStatisticInvalid.Message, data.Message)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		app := App(Config{})
-
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/statistics", bytes.NewBufferString("{}"))
-
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var data ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&data)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Code, data.Code)
-		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Message, data.Message)
-	})
-
 	t.Run("Invalid Request Body", func(t *testing.T) {
 		var (
 			gameID = uuid.NewString()
-			app    = App(Config{})
-			req    = httptest.NewRequest(http.MethodPost, "/api/v1/statistics", bytes.NewBufferString("{"))
+			app    = App(Config{
+				AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+					return auth.Claims{GameID: gameID}, nil
+				},
+			})
+			req = httptest.NewRequest(http.MethodPost, "/api/v1/statistics", bytes.NewBufferString("{"))
 		)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -219,6 +192,9 @@ func TestBuildCreateStatisticHanlder(t *testing.T) {
 
 		gameID := uuid.NewString()
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			CreateStatisticFunc: func(ctx context.Context, data statistic.NewStatisticData) (statistic.Statistic, error) {
 				return statistic.Statistic{}, errors.New("any error")
 			},
@@ -227,7 +203,7 @@ func TestBuildCreateStatisticHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/statistics", bytes.NewBufferString("{}"))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -250,6 +226,9 @@ func TestBuildGetStatisticHanlder(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 				return statistic.Statistic{ID: id, GameID: gameID}, nil
 			},
@@ -258,7 +237,7 @@ func TestBuildGetStatisticHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -272,27 +251,11 @@ func TestBuildGetStatisticHanlder(t *testing.T) {
 		assert.Equal(t, gameID, data.GameID)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		app := App(Config{})
-
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
-
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var data ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&data)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Code, data.Code)
-		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Message, data.Message)
-	})
-
 	t.Run("Invalid Statistic ID", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 				return statistic.Statistic{}, statistic.ErrInvalidStatisticID
 			},
@@ -301,7 +264,7 @@ func TestBuildGetStatisticHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -317,6 +280,9 @@ func TestBuildGetStatisticHanlder(t *testing.T) {
 
 	t.Run("Statistic Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 				return statistic.Statistic{}, statistic.ErrStatisticNotFound
 			},
@@ -325,7 +291,7 @@ func TestBuildGetStatisticHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -344,6 +310,9 @@ func TestBuildGetStatisticHanlder(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (statistic.Statistic, error) {
 				return statistic.Statistic{}, errors.New("any error")
 			},
@@ -352,7 +321,7 @@ func TestBuildGetStatisticHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -375,6 +344,9 @@ func TestBuildDeleteStatisticHanlder(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			SoftDeleteStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) error {
 				return nil
 			},
@@ -383,7 +355,7 @@ func TestBuildDeleteStatisticHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -392,6 +364,9 @@ func TestBuildDeleteStatisticHanlder(t *testing.T) {
 
 	t.Run("Invalid Statistic ID", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			SoftDeleteStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) error {
 				return statistic.ErrInvalidStatisticID
 			},
@@ -400,7 +375,7 @@ func TestBuildDeleteStatisticHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/statistics/invalid-id", nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -414,27 +389,11 @@ func TestBuildDeleteStatisticHanlder(t *testing.T) {
 		assert.Equal(t, ErrorResponseStatisticInvalidID.Message, data.Message)
 	})
 
-	t.Run("Missing Game ID", func(t *testing.T) {
-		app := App(Config{})
-
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
-
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := app.Test(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
-
-		var data ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&data)
-		assert.NoError(t, err)
-
-		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Code, data.Code)
-		assert.Equal(t, ErrorResponseStatisticInvalidGameID.Message, data.Message)
-	})
-
 	t.Run("Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			SoftDeleteStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) error {
 				return statistic.ErrStatisticNotFound
 			},
@@ -443,7 +402,7 @@ func TestBuildDeleteStatisticHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -462,6 +421,9 @@ func TestBuildDeleteStatisticHanlder(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			SoftDeleteStatisticByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) error {
 				return errors.New("any error")
 			},
@@ -470,7 +432,7 @@ func TestBuildDeleteStatisticHanlder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/statistics/%s", statisticID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)

@@ -86,7 +86,7 @@ var (
 // @router /api/v1/statistics/{statisticId}/players/{playerId} [POST]
 // @accept json
 // @produce json
-// @param X-Game-ID header string true "Game ID responsible for the statistic"
+// @param Authorization header string true "Game's JWT authorization"
 // @param statisticId path string true "Statistic ID"
 // @param playerId path string true "Player ID"
 // @param UpsertPlayerStatisticData body UpsertPlayerStatisticProgressionReq true "Values to update the player statistic progression"
@@ -116,7 +116,7 @@ func buildUpsertPlayerStatisticHandler(upsertPlayerStatisticFunc statistic.Upser
 // @description Get the player's statistic progression
 // @router /api/v1/statistics/{statisticId}/players/{playerId} [GET]
 // @produce json
-// @param X-Game-ID header string true "Game ID responsible for the statistic"
+// @param Authorization header string true "Game's JWT authorization"
 // @param statisticId path string true "Statistic ID"
 // @success 200 {object} PlayerStatisticProgression
 // @failure 400,404,422,500 {object} ErrorResponse

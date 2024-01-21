@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gabarcia/gameblitz/internal/auth"
 	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
 	"github.com/gabarcia/gameblitz/internal/leaderboard"
 	"github.com/gabarcia/gameblitz/internal/quest"
@@ -35,6 +36,10 @@ func buildErrorHandler() fiber.ErrorHandler {
 		var jsonErr *json.SyntaxError
 
 		switch {
+		// Auth
+		case errors.Is(err, auth.ErrInvalidCredentials):
+			validationErrorMessages := strings.Split(err.Error(), "\n")
+			return c.Status(http.StatusForbidden).JSON(ErrorResponseInvalidAuthCredentials.withDetails(validationErrorMessages...))
 		// Statistic
 		case errors.Is(err, statistic.ErrPlayerStatisticNotFound):
 			return c.Status(http.StatusNotFound).JSON(ErrorResponsePlayerStatisticNotFound)

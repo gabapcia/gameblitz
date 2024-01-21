@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gabarcia/gameblitz/internal/auth"
 	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
 	"github.com/gabarcia/gameblitz/internal/quest"
 	"github.com/gofiber/fiber/v2"
@@ -78,23 +79,18 @@ func questFromDomain(q quest.Quest) Quest {
 }
 
 var (
-	ErrorResponseQuestInvalidGameID = ErrorResponse{Code: "3.0", Message: "Invalid game id"}
-	ErrorResponseQuestInvalid       = ErrorResponse{Code: "3.1", Message: "Invalid quest data"}
-	ErrorResponseQuestNotFound      = ErrorResponse{Code: "3.2", Message: "Quest not found"}
-	ErrorResponseQuestInvalidID     = ErrorResponse{Code: "3.3", Message: "Invalid quest id"}
+	ErrorResponseQuestInvalid   = ErrorResponse{Code: "3.0", Message: "Invalid quest data"}
+	ErrorResponseQuestNotFound  = ErrorResponse{Code: "3.1", Message: "Quest not found"}
+	ErrorResponseQuestInvalidID = ErrorResponse{Code: "3.2", Message: "Invalid quest id"}
 )
 
 func buildGetQuestMiddleware(cache fiber.Storage, expiration time.Duration, getQuestByIDAndGameIDFunc quest.GetQuestByIDAndGameIDFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			id       = c.Params("questId")
-			gameID   = string(c.Request().Header.Peek(gameIDHeader))
-			cacheKey = fmt.Sprintf("GetQuestMiddleware:%s:%s", id, gameID)
+			claims   = c.Locals("claims").(auth.Claims)
+			cacheKey = fmt.Sprintf("GetQuestMiddleware:%s:%s", id, claims.GameID)
 		)
-
-		if gameID == "" {
-			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalidGameID)
-		}
 
 		if cache != nil {
 			data, err := cache.Get(cacheKey)
@@ -111,7 +107,7 @@ func buildGetQuestMiddleware(cache fiber.Storage, expiration time.Duration, getQ
 			}
 		}
 
-		quest, err := getQuestByIDAndGameIDFunc(c.Context(), id, gameID)
+		quest, err := getQuestByIDAndGameIDFunc(c.Context(), id, claims.GameID)
 		if err != nil {
 			return err
 		}
@@ -137,23 +133,20 @@ func buildGetQuestMiddleware(cache fiber.Storage, expiration time.Duration, getQ
 // @router /api/v1/quests [POST]
 // @accept json
 // @produce json
-// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param Authorization header string true "Game's JWT authorization"
 // @param NewQuestData body CreateQuestReq true "New quest config data"
 // @success 201 {object} Quest
 // @failure 400,422,500 {object} ErrorResponse
 func buildCreateQuestHanlder(createQuestFunc quest.CreateQuestFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		gameID := string(c.Request().Header.Peek(gameIDHeader))
-		if gameID == "" {
-			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalidGameID)
-		}
+		claims := c.Locals("claims").(auth.Claims)
 
 		var body CreateQuestReq
 		if err := c.BodyParser(&body); err != nil {
 			return err
 		}
 
-		quest, err := createQuestFunc(c.Context(), body.toDomain(gameID))
+		quest, err := createQuestFunc(c.Context(), body.toDomain(claims.GameID))
 		if err != nil {
 			return err
 		}
@@ -166,7 +159,7 @@ func buildCreateQuestHanlder(createQuestFunc quest.CreateQuestFunc) fiber.Handle
 // @description Get a quest and its tasks
 // @router /api/v1/quests/{questId} [GET]
 // @produce json
-// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param Authorization header string true "Game's JWT authorization"
 // @param questId path string true "Quest ID"
 // @success 200 {object} Quest
 // @failure 404,422,500 {object} ErrorResponse
@@ -174,14 +167,10 @@ func buildGetQuestHanlder(getQuestByIDAndGameID quest.GetQuestByIDAndGameIDFunc)
 	return func(c *fiber.Ctx) error {
 		var (
 			questID = c.Params("questId")
-			gameID  = string(c.Request().Header.Peek(gameIDHeader))
+			claims  = c.Locals("claims").(auth.Claims)
 		)
 
-		if gameID == "" {
-			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalidGameID)
-		}
-
-		quest, err := getQuestByIDAndGameID(c.Context(), questID, gameID)
+		quest, err := getQuestByIDAndGameID(c.Context(), questID, claims.GameID)
 		if err != nil {
 			return err
 		}
@@ -193,7 +182,7 @@ func buildGetQuestHanlder(getQuestByIDAndGameID quest.GetQuestByIDAndGameIDFunc)
 // @summary Delete Quest
 // @description Delete a quest and its tasks
 // @router /api/v1/quests/{questId} [DELETE]
-// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param Authorization header string true "Game's JWT authorization"
 // @param questId path string true "Quest ID"
 // @success 204
 // @failure 404,422,500 {object} ErrorResponse
@@ -201,14 +190,10 @@ func buildDeleteQuestHanlder(softDeleteQuestFunc quest.SoftDeleteQuestFunc) fibe
 	return func(c *fiber.Ctx) error {
 		var (
 			questID = c.Params("questId")
-			gameID  = string(c.Request().Header.Peek(gameIDHeader))
+			claims  = c.Locals("claims").(auth.Claims)
 		)
 
-		if gameID == "" {
-			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseQuestInvalidGameID)
-		}
-
-		if err := softDeleteQuestFunc(c.Context(), questID, gameID); err != nil {
+		if err := softDeleteQuestFunc(c.Context(), questID, claims.GameID); err != nil {
 			return err
 		}
 

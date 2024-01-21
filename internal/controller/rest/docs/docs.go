@@ -31,8 +31,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the leaderboard",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -84,8 +84,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the leaderboard",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -130,8 +130,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the leaderboard",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -178,8 +178,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the leaderboard",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -256,8 +256,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the leaderboard",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -329,8 +329,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the leaderboard",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -382,8 +382,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the leaderboard",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -428,8 +428,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the leaderboard",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -476,8 +476,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the quest",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -532,8 +532,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the quest",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -597,8 +597,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the quest",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -667,8 +667,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the leaderboard",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -720,8 +720,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the leaderboard",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -766,8 +766,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the leaderboard",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -814,8 +814,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the statistic",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },
@@ -872,8 +872,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Game ID responsible for the statistic",
-                        "name": "X-Game-ID",
+                        "description": "Game's JWT authorization",
+                        "name": "Authorization",
                         "in": "header",
                         "required": true
                     },

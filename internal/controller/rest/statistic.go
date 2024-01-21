@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gabarcia/gameblitz/internal/auth"
 	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
 	"github.com/gabarcia/gameblitz/internal/statistic"
 
@@ -62,23 +63,18 @@ func statisticFromDomain(s statistic.Statistic) Statistic {
 }
 
 var (
-	ErrorResponseStatisticInvalid       = ErrorResponse{Code: "4.0", Message: "Invalid statistic"}
-	ErrorResponseStatisticInvalidGameID = ErrorResponse{Code: "4.1", Message: "Invalid game id"}
-	ErrorResponseStatisticNotFound      = ErrorResponse{Code: "4.2", Message: "Statistic not found"}
-	ErrorResponseStatisticInvalidID     = ErrorResponse{Code: "4.3", Message: "Invalid statistic id"}
+	ErrorResponseStatisticInvalid   = ErrorResponse{Code: "4.0", Message: "Invalid statistic"}
+	ErrorResponseStatisticNotFound  = ErrorResponse{Code: "4.1", Message: "Statistic not found"}
+	ErrorResponseStatisticInvalidID = ErrorResponse{Code: "4.2", Message: "Invalid statistic id"}
 )
 
 func buildGetStatisticMiddleware(cache fiber.Storage, expiration time.Duration, getStatisticByIDAndGameIDFunc statistic.GetByIDAndGameIDFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			id       = c.Params("statisticId")
-			gameID   = string(c.Request().Header.Peek(gameIDHeader))
-			cacheKey = fmt.Sprintf("GetStatisticMiddleware:%s:%s", id, gameID)
+			claims   = c.Locals("claims").(auth.Claims)
+			cacheKey = fmt.Sprintf("GetStatisticMiddleware:%s:%s", id, claims.GameID)
 		)
-
-		if gameID == "" {
-			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseStatisticInvalidGameID)
-		}
 
 		if cache != nil {
 			data, err := cache.Get(cacheKey)
@@ -95,7 +91,7 @@ func buildGetStatisticMiddleware(cache fiber.Storage, expiration time.Duration, 
 			}
 		}
 
-		statistic, err := getStatisticByIDAndGameIDFunc(c.Context(), id, gameID)
+		statistic, err := getStatisticByIDAndGameIDFunc(c.Context(), id, claims.GameID)
 		if err != nil {
 			return err
 		}
@@ -121,23 +117,20 @@ func buildGetStatisticMiddleware(cache fiber.Storage, expiration time.Duration, 
 // @router /api/v1/statistics [POST]
 // @accept json
 // @produce json
-// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param Authorization header string true "Game's JWT authorization"
 // @param NewStatisticData body CreateStatisticReq true "New statistic config data"
 // @success 201 {object} Statistic
 // @failure 400,422,500 {object} ErrorResponse
 func buildCreateStatisticHandler(createStatisticFunc statistic.CreateFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		gameID := string(c.Request().Header.Peek(gameIDHeader))
-		if gameID == "" {
-			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseStatisticInvalidGameID)
-		}
+		claims := c.Locals("claims").(auth.Claims)
 
 		var body CreateStatisticReq
 		if err := c.BodyParser(&body); err != nil {
 			return err
 		}
 
-		statistic, err := createStatisticFunc(c.Context(), body.toDomain(gameID))
+		statistic, err := createStatisticFunc(c.Context(), body.toDomain(claims.GameID))
 		if err != nil {
 			return err
 		}
@@ -150,7 +143,7 @@ func buildCreateStatisticHandler(createStatisticFunc statistic.CreateFunc) fiber
 // @description Get a statistic by its id
 // @router /api/v1/statistics/{statisticId} [GET]
 // @produce json
-// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param Authorization header string true "Game's JWT authorization"
 // @param statisticId path string true "Statistic ID"
 // @success 200 {object} Statistic
 // @failure 404,422,500 {object} ErrorResponse
@@ -158,14 +151,10 @@ func buildGetStatisticHanlder(getStatisticByIDAndGameID statistic.GetByIDAndGame
 	return func(c *fiber.Ctx) error {
 		var (
 			statisticID = c.Params("statisticId")
-			gameID      = string(c.Request().Header.Peek(gameIDHeader))
+			claims      = c.Locals("claims").(auth.Claims)
 		)
 
-		if gameID == "" {
-			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseStatisticInvalidGameID)
-		}
-
-		statistic, err := getStatisticByIDAndGameID(c.Context(), statisticID, gameID)
+		statistic, err := getStatisticByIDAndGameID(c.Context(), statisticID, claims.GameID)
 		if err != nil {
 			return err
 		}
@@ -177,7 +166,7 @@ func buildGetStatisticHanlder(getStatisticByIDAndGameID statistic.GetByIDAndGame
 // @summary Delete Statistic
 // @description Delete a statistic by its id
 // @router /api/v1/statistics/{statisticId} [DELETE]
-// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param Authorization header string true "Game's JWT authorization"
 // @param statisticId path string true "Statistic ID"
 // @success 204
 // @failure 404,422,500 {object} ErrorResponse
@@ -185,14 +174,10 @@ func buildDeleteStatisticHanlder(softDeleteStatisticFunc statistic.SoftDeleteByI
 	return func(c *fiber.Ctx) error {
 		var (
 			questID = c.Params("statisticId")
-			gameID  = string(c.Request().Header.Peek(gameIDHeader))
+			claims  = c.Locals("claims").(auth.Claims)
 		)
 
-		if gameID == "" {
-			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseStatisticInvalidGameID)
-		}
-
-		if err := softDeleteStatisticFunc(c.Context(), questID, gameID); err != nil {
+		if err := softDeleteStatisticFunc(c.Context(), questID, claims.GameID); err != nil {
 			return err
 		}
 

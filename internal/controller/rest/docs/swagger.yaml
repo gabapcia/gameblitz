@@ -376,9 +376,9 @@ paths:
       - application/json
       description: Create a leaderboard
       parameters:
-      - description: Game ID responsible for the leaderboard
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: New leaderboard config data
@@ -411,9 +411,9 @@ paths:
     delete:
       description: Delete a leaderboard by id and game id
       parameters:
-      - description: Game ID responsible for the leaderboard
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: Leaderboard ID
@@ -440,9 +440,9 @@ paths:
     get:
       description: Return a leaderboard by id and game id
       parameters:
-      - description: Game ID responsible for the leaderboard
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: Leaderboard ID
@@ -474,9 +474,9 @@ paths:
     get:
       description: Get the leaderboard ranking paginated
       parameters:
-      - description: Game ID responsible for the leaderboard
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: Leaderboard ID
@@ -527,9 +527,9 @@ paths:
       - application/json
       description: Set or update a player's rank on the leaderboard
       parameters:
-      - description: Game ID responsible for the leaderboard
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: Leaderboard ID
@@ -576,9 +576,9 @@ paths:
       - application/json
       description: Create a quest and its tasks
       parameters:
-      - description: Game ID responsible for the leaderboard
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: New quest config data
@@ -611,9 +611,9 @@ paths:
     delete:
       description: Delete a quest and its tasks
       parameters:
-      - description: Game ID responsible for the leaderboard
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: Quest ID
@@ -640,9 +640,9 @@ paths:
     get:
       description: Get a quest and its tasks
       parameters:
-      - description: Game ID responsible for the leaderboard
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: Quest ID
@@ -674,9 +674,9 @@ paths:
     get:
       description: Get a player's quest progression
       parameters:
-      - description: Game ID responsible for the quest
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: Quest ID
@@ -714,9 +714,9 @@ paths:
       - application/json
       description: Updates a player's quest progression
       parameters:
-      - description: Game ID responsible for the quest
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: Quest ID
@@ -758,9 +758,9 @@ paths:
     post:
       description: Start a player's quest progression
       parameters:
-      - description: Game ID responsible for the quest
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: Quest ID
@@ -803,9 +803,9 @@ paths:
       - application/json
       description: Create a statistic
       parameters:
-      - description: Game ID responsible for the leaderboard
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: New statistic config data
@@ -838,9 +838,9 @@ paths:
     delete:
       description: Delete a statistic by its id
       parameters:
-      - description: Game ID responsible for the leaderboard
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: Statistic ID
@@ -867,9 +867,9 @@ paths:
     get:
       description: Get a statistic by its id
       parameters:
-      - description: Game ID responsible for the leaderboard
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: Statistic ID
@@ -901,9 +901,9 @@ paths:
     get:
       description: Get the player's statistic progression
       parameters:
-      - description: Game ID responsible for the statistic
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: Statistic ID
@@ -940,9 +940,9 @@ paths:
       - application/json
       description: Set or update a player's statistic progression
       parameters:
-      - description: Game ID responsible for the statistic
+      - description: Game's JWT authorization
         in: header
-        name: X-Game-ID
+        name: Authorization
         required: true
         type: string
       - description: Statistic ID

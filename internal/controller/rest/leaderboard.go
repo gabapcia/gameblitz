@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gabarcia/gameblitz/internal/auth"
 	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
 	"github.com/gabarcia/gameblitz/internal/leaderboard"
 
@@ -67,23 +68,18 @@ func leaderboardFromDomain(l leaderboard.Leaderboard) Leaderboard {
 }
 
 var (
-	ErrorResponseLeaderboardInvalid       = ErrorResponse{Code: "1.0", Message: "Invalid leaderboard"}
-	ErrorResponseLeaderboardNotFound      = ErrorResponse{Code: "1.1", Message: "Leaderboard not found"}
-	ErrorResponseLeaderboardInvalidID     = ErrorResponse{Code: "1.2", Message: "Invalid leaderboard ID"}
-	ErrorResponseLeaderboardInvalidGameID = ErrorResponse{Code: "1.3", Message: "Invalid leaderboard game ID"}
+	ErrorResponseLeaderboardInvalid   = ErrorResponse{Code: "1.0", Message: "Invalid leaderboard"}
+	ErrorResponseLeaderboardNotFound  = ErrorResponse{Code: "1.1", Message: "Leaderboard not found"}
+	ErrorResponseLeaderboardInvalidID = ErrorResponse{Code: "1.2", Message: "Invalid leaderboard ID"}
 )
 
 func buildGetLeaderboardMiddleware(cache fiber.Storage, expiration time.Duration, getLeaderboardByIDAndGameIDFunc leaderboard.GetByIDAndGameIDFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var (
 			id       = c.Params("leaderboardId")
-			gameID   = string(c.Request().Header.Peek(gameIDHeader))
-			cacheKey = fmt.Sprintf("GetLeaderboardMiddleware:%s:%s", id, gameID)
+			claims   = c.Locals("claims").(auth.Claims)
+			cacheKey = fmt.Sprintf("GetLeaderboardMiddleware:%s:%s", id, claims.GameID)
 		)
-
-		if gameID == "" {
-			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalidGameID)
-		}
 
 		if cache != nil {
 			data, err := cache.Get(cacheKey)
@@ -100,7 +96,7 @@ func buildGetLeaderboardMiddleware(cache fiber.Storage, expiration time.Duration
 			}
 		}
 
-		leaderboard, err := getLeaderboardByIDAndGameIDFunc(c.Context(), id, gameID)
+		leaderboard, err := getLeaderboardByIDAndGameIDFunc(c.Context(), id, claims.GameID)
 		if err != nil {
 			return err
 		}
@@ -126,23 +122,20 @@ func buildGetLeaderboardMiddleware(cache fiber.Storage, expiration time.Duration
 // @router /api/v1/leaderboards [POST]
 // @accept json
 // @produce json
-// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param Authorization header string true "Game's JWT authorization"
 // @param NewLeaderboardData body CreateLeaderboardReq true "New leaderboard config data"
 // @success 201 {object} Leaderboard
 // @failure 400,422,500 {object} ErrorResponse
 func buildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		gameID := string(c.Request().Header.Peek(gameIDHeader))
-		if gameID == "" {
-			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalidGameID)
-		}
+		claims := c.Locals("claims").(auth.Claims)
 
 		var body CreateLeaderboardReq
 		if err := c.BodyParser(&body); err != nil {
 			return err
 		}
 
-		leaderboard, err := createLeaderboardFunc(c.Context(), body.toDomain(gameID))
+		leaderboard, err := createLeaderboardFunc(c.Context(), body.toDomain(claims.GameID))
 		if err != nil {
 			return err
 		}
@@ -155,7 +148,7 @@ func buildCreateLeaderboardHandler(createLeaderboardFunc leaderboard.CreateFunc)
 // @description Return a leaderboard by id and game id
 // @router /api/v1/leaderboards/{leaderboardId} [GET]
 // @produce json
-// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param Authorization header string true "Game's JWT authorization"
 // @param leaderboardId path string true "Leaderboard ID"
 // @success 200 {object} Leaderboard
 // @failure 404,422,500 {object} ErrorResponse
@@ -163,14 +156,10 @@ func buildGetLeaderboardHandler(getLeaderboardByIDAndGameIDFunc leaderboard.GetB
 	return func(c *fiber.Ctx) error {
 		var (
 			id     = c.Params("leaderboardId")
-			gameID = string(c.Request().Header.Peek(gameIDHeader))
+			claims = c.Locals("claims").(auth.Claims)
 		)
 
-		if gameID == "" {
-			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalidGameID)
-		}
-
-		leaderboard, err := getLeaderboardByIDAndGameIDFunc(c.Context(), id, gameID)
+		leaderboard, err := getLeaderboardByIDAndGameIDFunc(c.Context(), id, claims.GameID)
 		if err != nil {
 			return err
 		}
@@ -182,7 +171,7 @@ func buildGetLeaderboardHandler(getLeaderboardByIDAndGameIDFunc leaderboard.GetB
 // @summary Delete Leaderboard
 // @description Delete a leaderboard by id and game id
 // @router /api/v1/leaderboards/{leaderboardId} [DELETE]
-// @param X-Game-ID header string true "Game ID responsible for the leaderboard"
+// @param Authorization header string true "Game's JWT authorization"
 // @param leaderboardId path string true "Leaderboard ID"
 // @success 204
 // @failure 404,422,500 {object} ErrorResponse
@@ -190,14 +179,10 @@ func buildDeleteLeaderboardHandler(deleteLeaderboardByIDAndGameIDFunc leaderboar
 	return func(c *fiber.Ctx) error {
 		var (
 			id     = c.Params("leaderboardId")
-			gameID = string(c.Request().Header.Peek(gameIDHeader))
+			claims = c.Locals("claims").(auth.Claims)
 		)
 
-		if gameID == "" {
-			return c.Status(http.StatusUnprocessableEntity).JSON(ErrorResponseLeaderboardInvalidGameID)
-		}
-
-		if err := deleteLeaderboardByIDAndGameIDFunc(c.Context(), id, gameID); err != nil {
+		if err := deleteLeaderboardByIDAndGameIDFunc(c.Context(), id, claims.GameID); err != nil {
 			return err
 		}
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gabarcia/gameblitz/internal/auth"
 	"github.com/gabarcia/gameblitz/internal/leaderboard"
 	"github.com/gabarcia/gameblitz/internal/quest"
 	"github.com/gabarcia/gameblitz/internal/statistic"
@@ -16,16 +17,15 @@ import (
 	_ "github.com/gabarcia/gameblitz/internal/controller/rest/docs"
 )
 
-const (
-	gameIDHeader = "X-Game-ID"
-)
-
 type Config struct {
 	Port int
 
 	CacheSorage               fiber.Storage
 	CacheExpiration           time.Duration
 	CacheMiddlewareExpiration time.Duration
+
+	// Auth
+	AuthenticateFunc auth.AuthenticateFunc
 
 	// Leaderboard
 	CreateLeaderboardFunc              leaderboard.CreateFunc
@@ -66,13 +66,13 @@ func App(config Config) *fiber.App {
 
 	app.Use(recover.New())
 	app.Get("/docs/*", swagger.HandlerDefault)
-	app.Use(cache.New(cache.Config{
+
+	api := app.Group("/api/v1", buildAuthMiddleware(config.AuthenticateFunc))
+	api.Use(cache.New(cache.Config{
 		Expiration:   config.CacheExpiration,
 		Storage:      config.CacheSorage,
 		CacheControl: true,
 	}))
-
-	api := app.Group("/api/v1")
 
 	// Leaderboards
 	leaderboards := api.Group("/leaderboards")

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gabarcia/gameblitz/internal/auth"
 	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
 	"github.com/gabarcia/gameblitz/internal/quest"
 
@@ -62,6 +63,9 @@ func TestBuildStartPlayerQuestHandler(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return expectedQuest, nil
 			},
@@ -73,7 +77,7 @@ func TestBuildStartPlayerQuestHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/quests/%s/players/%s", questID, playerID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -90,6 +94,9 @@ func TestBuildStartPlayerQuestHandler(t *testing.T) {
 
 	t.Run("Quest Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return quest.Quest{}, quest.ErrQuestNotFound
 			},
@@ -98,7 +105,7 @@ func TestBuildStartPlayerQuestHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/quests/%s/players/%s", questID, playerID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -114,6 +121,9 @@ func TestBuildStartPlayerQuestHandler(t *testing.T) {
 
 	t.Run("Already Started", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return expectedQuest, nil
 			},
@@ -125,7 +135,7 @@ func TestBuildStartPlayerQuestHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/quests/%s/players/%s", questID, playerID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -144,6 +154,9 @@ func TestBuildStartPlayerQuestHandler(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return expectedQuest, nil
 			},
@@ -155,7 +168,7 @@ func TestBuildStartPlayerQuestHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/quests/%s/players/%s", questID, playerID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -214,6 +227,9 @@ func TestBuildGetPlayerQuestProgressionHandler(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return expectedQuest, nil
 			},
@@ -225,7 +241,7 @@ func TestBuildGetPlayerQuestProgressionHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s/players/%s", questID, playerID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -242,6 +258,9 @@ func TestBuildGetPlayerQuestProgressionHandler(t *testing.T) {
 
 	t.Run("Quest Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return quest.Quest{}, quest.ErrQuestNotFound
 			},
@@ -250,7 +269,7 @@ func TestBuildGetPlayerQuestProgressionHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s/players/%s", questID, playerID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -266,6 +285,9 @@ func TestBuildGetPlayerQuestProgressionHandler(t *testing.T) {
 
 	t.Run("Not Started", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return expectedQuest, nil
 			},
@@ -277,7 +299,7 @@ func TestBuildGetPlayerQuestProgressionHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s/players/%s", questID, playerID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -296,6 +318,9 @@ func TestBuildGetPlayerQuestProgressionHandler(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return expectedQuest, nil
 			},
@@ -307,7 +332,7 @@ func TestBuildGetPlayerQuestProgressionHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/quests/%s/players/%s", questID, playerID), nil)
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -366,6 +391,9 @@ func TestBuildUpdatePlayerQuestProgressionHandler(t *testing.T) {
 
 	t.Run("OK", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return expectedQuest, nil
 			},
@@ -385,7 +413,7 @@ func TestBuildUpdatePlayerQuestProgressionHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v1/quests/%s/players/%s", questID, playerID), bytes.NewBuffer(data))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -405,6 +433,9 @@ func TestBuildUpdatePlayerQuestProgressionHandler(t *testing.T) {
 
 	t.Run("Quest Not Found", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return quest.Quest{}, quest.ErrQuestNotFound
 			},
@@ -418,7 +449,7 @@ func TestBuildUpdatePlayerQuestProgressionHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v1/quests/%s/players/%s", questID, playerID), bytes.NewBuffer(data))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -434,6 +465,9 @@ func TestBuildUpdatePlayerQuestProgressionHandler(t *testing.T) {
 
 	t.Run("Already Completed", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return expectedQuest, nil
 			},
@@ -450,7 +484,7 @@ func TestBuildUpdatePlayerQuestProgressionHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v1/quests/%s/players/%s", questID, playerID), bytes.NewBuffer(data))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -466,6 +500,9 @@ func TestBuildUpdatePlayerQuestProgressionHandler(t *testing.T) {
 
 	t.Run("Not Started", func(t *testing.T) {
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return expectedQuest, nil
 			},
@@ -482,7 +519,7 @@ func TestBuildUpdatePlayerQuestProgressionHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v1/quests/%s/players/%s", questID, playerID), bytes.NewBuffer(data))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
@@ -501,6 +538,9 @@ func TestBuildUpdatePlayerQuestProgressionHandler(t *testing.T) {
 		defer zap.Sync()
 
 		app := App(Config{
+			AuthenticateFunc: func(ctx context.Context, credentials string) (auth.Claims, error) {
+				return auth.Claims{GameID: gameID}, nil
+			},
 			GetQuestByIDAndGameIDFunc: func(ctx context.Context, id, gameID string) (quest.Quest, error) {
 				return expectedQuest, nil
 			},
@@ -517,7 +557,7 @@ func TestBuildUpdatePlayerQuestProgressionHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v1/quests/%s/players/%s", questID, playerID), bytes.NewBuffer(data))
 
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set(gameIDHeader, gameID)
+		req.Header.Set("Authorization", uuid.NewString())
 
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
