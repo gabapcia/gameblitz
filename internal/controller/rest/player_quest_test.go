@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gabarcia/gameblitz/internal/auth"
-	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
-	"github.com/gabarcia/gameblitz/internal/quest"
+	"github.com/gabapcia/gameblitz/internal/auth"
+	"github.com/gabapcia/gameblitz/internal/infra/logger/zap"
+	"github.com/gabapcia/gameblitz/internal/quest"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

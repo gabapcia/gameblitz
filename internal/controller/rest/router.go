@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gabarcia/gameblitz/internal/auth"
-	"github.com/gabarcia/gameblitz/internal/leaderboard"
-	"github.com/gabarcia/gameblitz/internal/quest"
-	"github.com/gabarcia/gameblitz/internal/statistic"
+	"github.com/gabapcia/gameblitz/internal/auth"
+	"github.com/gabapcia/gameblitz/internal/leaderboard"
+	"github.com/gabapcia/gameblitz/internal/quest"
+	"github.com/gabapcia/gameblitz/internal/statistic"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/swagger"
 
-	_ "github.com/gabarcia/gameblitz/internal/controller/rest/docs"
+	_ "github.com/gabapcia/gameblitz/internal/controller/rest/docs"
 )
 
 type Config struct {

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gabarcia/gameblitz/internal/auth"
+	"github.com/gabapcia/gameblitz/internal/auth"
 
 	"github.com/golang-jwt/jwt/v5"
 )

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gabarcia/gameblitz/internal/quest"
+	"github.com/gabapcia/gameblitz/internal/quest"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/gabarcia/gameblitz/internal/statistic"
+	"github.com/gabapcia/gameblitz/internal/statistic"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

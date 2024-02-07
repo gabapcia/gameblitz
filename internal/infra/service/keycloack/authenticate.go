@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gabarcia/gameblitz/internal/auth"
+	"github.com/gabapcia/gameblitz/internal/auth"
 )
 
 const splittedHeaderSize = 2

@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gabarcia/gameblitz/internal/infra/storage/postgres/internal/sqlc"
-	"github.com/gabarcia/gameblitz/internal/quest"
+	"github.com/gabapcia/gameblitz/internal/infra/storage/postgres/internal/sqlc"
+	"github.com/gabapcia/gameblitz/internal/quest"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"

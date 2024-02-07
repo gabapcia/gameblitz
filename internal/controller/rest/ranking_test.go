@@ -11,9 +11,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gabarcia/gameblitz/internal/auth"
-	"github.com/gabarcia/gameblitz/internal/infra/logger/zap"
-	"github.com/gabarcia/gameblitz/internal/leaderboard"
+	"github.com/gabapcia/gameblitz/internal/auth"
+	"github.com/gabapcia/gameblitz/internal/infra/logger/zap"
+	"github.com/gabapcia/gameblitz/internal/leaderboard"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

@@ -3,7 +3,7 @@ package rest
 import (
 	"time"
 
-	"github.com/gabarcia/gameblitz/internal/quest"
+	"github.com/gabapcia/gameblitz/internal/quest"
 )
 
 type Task struct {

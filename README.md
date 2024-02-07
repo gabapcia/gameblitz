@@ -20,7 +20,7 @@ The Game Blitz API is designed to manage basic gaming features such as Statistic
 
 1. Clone the repository:
 ```bash
-git clone github.com/gabarcia/gameblitz
+git clone github.com/gabapcia/gameblitz
 ```
 
 2. Navigate to the project directory:
