@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/bradfitz/gomemcache v0.0.0-20230905024940-24af94b03874
 	github.com/diegoholiveira/jsonlogic/v3 v3.4.0
-	github.com/gofiber/fiber/v2 v2.52.0
+	github.com/gofiber/fiber/v2 v2.52.1
 	github.com/gofiber/swagger v1.0.0
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/google/uuid v1.6.0
@@ -13,12 +13,12 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx v1.2.28
 	github.com/rabbitmq/amqp091-go v1.9.0
-	github.com/redis/go-redis/v9 v9.4.0
+	github.com/redis/go-redis/v9 v9.5.1
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggo/swag v1.16.3
 	go.elastic.co/ecszap v1.0.2
-	go.mongodb.org/mongo-driver v1.13.1
-	go.uber.org/zap v1.26.0
+	go.mongodb.org/mongo-driver v1.14.0
+	go.uber.org/zap v1.27.0
 )
 
 require (
