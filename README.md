@@ -3,7 +3,7 @@
 
 ### Overview
 
-The Game Blitz API is designed to manage basic gaming features such as Statistics, Quests, and Leaderboards. It is implemented using Golang version 1.21 and provides a robust set of endpoints for creating, retrieving, updating, and deleting game-related data.
+The Game Blitz API is designed to manage basic gaming features such as Statistics, Quests, and Leaderboards. It is implemented using Golang version 1.22 and provides a robust set of endpoints for creating, retrieving, updating, and deleting game-related data.
 
 ### Features
 
