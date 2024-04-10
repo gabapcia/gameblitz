@@ -55,8 +55,10 @@ WHERE
 WITH "pq_tasks_status" AS (
     SELECT pqt."task_id", (pqt."completed_at" IS NOT NULL) AS "completed"
     FROM "player_quests" pq
-    JOIN "player_quest_tasks" pqt ON pqt."player_quest_id" = pq."id"
-    WHERE pq."quest_id" = $1 AND pq."player_id" = $2
+    JOIN "player_quest_tasks" pqt
+        ON pqt."player_quest_id" = pq."id"
+    WHERE
+        pq."quest_id" = $1 AND pq."player_id" = $2
 ), "pq_pending_tasks" AS (
 	SELECT t."id"
 	FROM "tasks" t
@@ -66,22 +68,32 @@ WITH "pq_tasks_status" AS (
 ), "pq_tasks_ready_to_start" AS (
     SELECT td."this_task" AS "id"
     FROM "tasks_dependencies" td
-    WHERE td."this_task" IN (SELECT "id" FROM "pq_pending_tasks")
+    WHERE
+        td."this_task" IN (SELECT "id" FROM "pq_pending_tasks")
     GROUP BY td."this_task"
-    HAVING ARRAY_AGG(td."depends_on_task") <@ (SELECT ARRAY_AGG("task_id") FROM "pq_tasks_status" WHERE "completed" = TRUE)
+    HAVING
+        ARRAY_AGG(td."depends_on_task") <@ (
+            SELECT ARRAY_AGG("task_id")
+            FROM "pq_tasks_status"
+            WHERE "completed" = TRUE
+        )
 )
 INSERT INTO "player_quest_tasks" ("player_id", "player_quest_id", "task_id")
 SELECT $2, pq2."id", trs."id"
 FROM "pq_tasks_ready_to_start" trs
 CROSS JOIN "player_quests" pq2
-WHERE pq2."quest_id" = $1 AND pq2."player_id" = $2;
+WHERE
+    pq2."quest_id" = $1 AND pq2."player_id" = $2;
 
 -- name: MarkPlayerQuestAsCompleted :exec
 WITH "completion_list" AS (
 	SELECT (pqt."completed_at" IS NOT NULL) AS "completed"
 	FROM "tasks" t
-	LEFT JOIN "player_quest_tasks" pqt ON t.id = pqt."task_id" AND pqt."player_id" = $2
-	WHERE t."quest_id" = $1 AND t."required_for_completion" = TRUE
+	LEFT JOIN "player_quest_tasks" pqt
+        ON t.id = pqt."task_id" AND pqt."player_id" = $2
+	WHERE
+        t."quest_id" = $1 AND
+        t."required_for_completion" = TRUE
 )
 UPDATE "player_quests"
 SET

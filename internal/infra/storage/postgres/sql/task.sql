@@ -10,10 +10,14 @@ VALUES ($1, $2);
 -- name: ListTasksByQuestID :many
 SELECT *
 FROM "tasks_with_its_dependencies" t
-WHERE t."quest_id" = $1 AND t."deleted_at" IS NULL;
+WHERE
+    t."quest_id" = $1 AND
+    t."deleted_at" IS NULL;
 
 -- name: SoftDeleteTasksByQuestID :exec
 UPDATE "tasks"
 SET
     "deleted_at" = NOW()
-WHERE "quest_id" = $1 AND "deleted_at" IS NULL;
+WHERE
+    "quest_id" = $1 AND
+    "deleted_at" IS NULL;
