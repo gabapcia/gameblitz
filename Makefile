@@ -1,4 +1,5 @@
 test:			## Run unit tests
+	@go clean -testcache
 	@go test ./...
 
 api-docs:		## Generate API Docs
